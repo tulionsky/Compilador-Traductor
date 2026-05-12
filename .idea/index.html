@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compilador Traductor EN-ES</title>
+    <link rel="stylesheet" href="css/styles.css">
+
+    <!-- compromise.js — análisis léxico inglés -->
+    <script src="https://unpkg.com/compromise@14.14.0/builds/compromise.js"></script>
+</head>
+<body>
+
+<header>
+    <h1>Compilador Traductor Inglés ↔ Español</h1>
+</header>
+
+<main>
+    <!-- Panel de entrada -->
+    <section id="panel-entrada">
+        <label>Texto de entrada</label>
+        <textarea id="texto-entrada" placeholder="Escribe una oración en inglés..."></textarea>
+        <button id="btn-analizar">Analizar</button>
+    </section>
+
+    <!-- Panel de salida -->
+    <section id="panel-salida">
+        <label>Traducción</label>
+        <textarea id="texto-salida" readonly placeholder="La traducción aparecerá aquí..."></textarea>
+    </section>
+</main>
+
+<!-- Tabla de símbolos -->
+<section id="seccion-tabla">
+    <h2>Tabla de Símbolos</h2>
+    <table id="tabla-simbolos">
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>Token</th>
+            <th>Lema</th>
+            <th>Categoría</th>
+            <th>Número</th>
+            <th>Género</th>
+        </tr>
+        </thead>
+        <tbody id="cuerpo-tabla">
+        <!-- Se llena dinámicamente -->
+        </tbody>
+    </table>
+</section>
+
+<!-- Tabla de errores -->
+<section id="seccion-errores">
+    <h2>Tabla de Errores</h2>
+    <table id="tabla-errores">
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>Tipo</th>
+            <th>Posición</th>
+            <th>Token</th>
+            <th>Descripción</th>
+        </tr>
+        </thead>
+        <tbody id="cuerpo-errores">
+        <!-- Se llena dinámicamente -->
+        </tbody>
+    </table>
+</section>
+
+<script src="js/lexico.js"></script>
+
+</body>
+</html>
