@@ -208,16 +208,3 @@ function renderizarTablaErrores(errores) {
     });
 }
 
-// ─── BOTÓN ANALIZAR ──────────────────────────────────────────
-document.getElementById('btn-analizar').addEventListener('click', () => {
-    const texto = document.getElementById('texto-entrada').value.trim();
-    if (!texto) {
-        alert('Escribe una oración primero.');
-        return;
-    }
-    const { tablaSimbolos, errores } = analizarLexico(texto);
-    renderizarTablaSimbolos(tablaSimbolos);
-    renderizarTablaErrores(errores);
-    console.log('Tabla de símbolos:', tablaSimbolos);
-    console.log('Errores léxicos:', errores);
-});

@@ -7,68 +7,28 @@
 "use strict";
 
 // ─────────────────────────────────────────────
-// CATEGORÍAS que vienen del módulo léxico (Tulio)
+// CATEGORÍAS (renombradas a CAT_SINT para evitar conflicto con lexico.js)
 // ─────────────────────────────────────────────
-const CAT = {
-    ARTICULO:              "ARTICULO",
-    SUSTANTIVO:            "SUSTANTIVO",
-    PRONOMBRE_PERSONAL:    "PRONOMBRE_PERSONAL",
-    PRONOMBRE_DEMOSTRATIVO:"PRONOMBRE_DEMOSTRATIVO",
+const CAT_SINT = {
+    ARTICULO:               "ARTICULO",
+    SUSTANTIVO:             "SUSTANTIVO",
+    PRONOMBRE_PERSONAL:     "PRONOMBRE_PERSONAL",
+    PRONOMBRE_DEMOSTRATIVO: "PRONOMBRE_DEMOSTRATIVO",
     PRONOMBRE_INTERROGATIVO:"PRONOMBRE_INTERROGATIVO",
-    VERBO:                 "VERBO",
-    VERBO_AUXILIAR:        "VERBO_AUXILIAR",
-    ADJETIVO:              "ADJETIVO",
-    ADVERBIO:              "ADVERBIO",
-    NEGACION:              "NEGACION",          // not, n't
-    CONJUNCION_COORD:      "CONJUNCION_COORDINANTE",
-    CONJUNCION_SUB:        "CONJUNCION_SUBORDINANTE",
-    PREPOSICION:           "PREPOSICION",
-    INTERJECCIÓN:          "INTERJECCION",
-    SIGNO_PUNTUACION:      "SIGNO_PUNTUACION",
-    CONTRACCION:           "CONTRACCION",
-    POSESIVO:              "POSESIVO",
-    NUMERAL:               "NUMERAL",
+    VERBO:                  "VERBO",
+    VERBO_AUXILIAR:         "VERBO_AUXILIAR",
+    ADJETIVO:               "ADJETIVO",
+    ADVERBIO:               "ADVERBIO",
+    NEGACION:               "NEGACION",
+    CONJUNCION_COORD:       "CONJUNCION_COORDINANTE",
+    CONJUNCION_SUB:         "CONJUNCION_SUBORDINANTE",
+    PREPOSICION:            "PREPOSICION",
+    INTERJECCION:           "INTERJECCION",
+    SIGNO_PUNTUACION:       "SIGNO_PUNTUACION",
+    CONTRACCION:            "CONTRACCION",
+    POSESIVO:               "POSESIVO",
+    NUMERAL:                "NUMERAL",
 };
-
-// ─── ADAPTADOR — convierte tablaSimbolos de Tulio al formato del parser ───
-const VERBOS_AUXILIARES = [
-    'is','are','was','were','am',
-    'do','does','did',
-    'have','has','had',
-    'will','would','shall','should',
-    'can','could','may','might','must'
-];
-
-function adaptarTokens(tablaSimbolos) {
-    return tablaSimbolos.map(fila => {
-        let categoria = fila.categoria;
-
-        // Normalizar puntuación
-        if (categoria === 'PUNTUACION') {
-            categoria = 'SIGNO_PUNTUACION';
-        }
-
-        // Normalizar todos los adverbios excepto negación
-        if (categoria === 'ADVERBIO_NEGACION' &&
-            (fila.lema === 'not' || fila.lema === "n't")) {
-            categoria = 'NEGACION';
-        } else if (categoria.startsWith('ADVERBIO_')) {
-            categoria = 'ADVERBIO';
-        }
-
-        // Detectar verbos auxiliares (Tulio los clasifica como VERBO)
-        if (categoria === 'VERBO' &&
-            VERBOS_AUXILIARES.includes(fila.lema.toLowerCase())) {
-            categoria = 'VERBO_AUXILIAR';
-        }
-
-        return {
-            token:    fila.token,
-            lema:     fila.lema,
-            categoria: categoria
-        };
-    });
-}
 
 // ─────────────────────────────────────────────
 // CLASE PRINCIPAL DEL ANALIZADOR SINTÁCTICO
@@ -76,14 +36,13 @@ function adaptarTokens(tablaSimbolos) {
 class AnalizadorSintactico {
 
     constructor() {
-        this.tokens   = [];   // Array de tokens del léxico
-        this.posicion = 0;    // Puntero actual en el array
-        this.errores  = [];   // Errores encontrados
-        this.arbol    = null; // Árbol de derivación resultante
+        this.tokens   = [];
+        this.posicion = 0;
+        this.errores  = [];
+        this.arbol    = null;
     }
 
     // ── MÉTODO PÚBLICO PRINCIPAL ──────────────────
-    // Recibe el array de tokens y devuelve el resultado completo
     analizar(tokens) {
         this.tokens   = tokens;
         this.posicion = 0;
@@ -105,7 +64,7 @@ class AnalizadorSintactico {
     }
 
     // ─────────────────────────────────────────────
-    // PARSEO PRINCIPAL — detecta qué tipo de oración es
+    // PARSEO PRINCIPAL
     // ─────────────────────────────────────────────
     _parsearOracion() {
         const tokenActual = this._ver();
@@ -115,7 +74,6 @@ class AnalizadorSintactico {
             return null;
         }
 
-        // Detectar tipo de oración por el primer token
         if (this._esAuxiliar(tokenActual)) {
             return this._parsearInterrogativa();
         }
@@ -128,13 +86,11 @@ class AnalizadorSintactico {
             return this._parsearExclamativaSimple();
         }
 
-        // Si empieza con sujeto → puede ser declarativa, negativa, compuesta o subordinada
         return this._parsearOracionConSujeto();
     }
 
     // ─────────────────────────────────────────────
-    // ORACIÓN DECLARATIVA / NEGATIVA / COMPUESTA / SUBORDINADA
-    // Comparten el inicio con un sujeto
+    // ORACIÓN CON SUJETO (declarativa / negativa / compuesta / subordinada)
     // ─────────────────────────────────────────────
     _parsearOracionConSujeto() {
         const nodoSujeto = this._parsearSujeto();
@@ -147,26 +103,22 @@ class AnalizadorSintactico {
             return null;
         }
 
-        // Verificar si es NEGATIVA (auxiliar + not/n't antes del verbo)
         if (this._esAuxiliar(this._ver()) && this._esNegacion(this._verEn(1))) {
             return this._parsearNegativa(nodoSujeto);
         }
 
         const nodoPredicado = this._parsearPredicado();
 
-        // Verificar si hay conjunción coordinante → COMPUESTA
-        if (this._esCat(this._ver(), CAT.CONJUNCION_COORD)) {
+        if (this._esCat(this._ver(), CAT_SINT.CONJUNCION_COORD)) {
             return this._parsearCompuesta(nodoSujeto, nodoPredicado);
         }
 
-        // Verificar si hay conjunción subordinante → SUBORDINADA
-        if (this._esCat(this._ver(), CAT.CONJUNCION_SUB)) {
+        if (this._esCat(this._ver(), CAT_SINT.CONJUNCION_SUB)) {
             return this._parsearSubordinada(nodoSujeto, nodoPredicado);
         }
 
-        // Si llegamos aquí: DECLARATIVA simple
         return {
-            tipo: "DECLARATIVA",
+            tipo:  "DECLARATIVA",
             regla: "<oracion> ::= <sujeto> <predicado>",
             hijos: [nodoSujeto, nodoPredicado]
         };
@@ -174,35 +126,31 @@ class AnalizadorSintactico {
 
     // ─────────────────────────────────────────────
     // PARSEAR SUJETO
-    // <sujeto> ::= [ARTICULO] SUSTANTIVO | PRONOMBRE
+    // <sujeto> ::= [ARTICULO] [POSESIVO] [ADJETIVO] SUSTANTIVO | PRONOMBRE
     // ─────────────────────────────────────────────
     _parsearSujeto() {
         const hijos = [];
 
-        // Artículo opcional
-        if (this._esCat(this._ver(), CAT.ARTICULO)) {
-            hijos.push(this._consumir(CAT.ARTICULO));
+        if (this._esCat(this._ver(), CAT_SINT.ARTICULO)) {
+            hijos.push(this._consumir(CAT_SINT.ARTICULO));
         }
 
-        // Posesivo opcional (my, your, his...)
-        if (this._esCat(this._ver(), CAT.POSESIVO)) {
-            hijos.push(this._consumir(CAT.POSESIVO));
+        if (this._esCat(this._ver(), CAT_SINT.POSESIVO)) {
+            hijos.push(this._consumir(CAT_SINT.POSESIVO));
         }
 
-        // Adjetivo opcional antes del sustantivo
-        if (this._esCat(this._ver(), CAT.ADJETIVO)) {
-            hijos.push(this._consumir(CAT.ADJETIVO));
+        if (this._esCat(this._ver(), CAT_SINT.ADJETIVO)) {
+            hijos.push(this._consumir(CAT_SINT.ADJETIVO));
         }
 
-        // Núcleo del sujeto: Sustantivo o Pronombre
-        if (this._esCat(this._ver(), CAT.SUSTANTIVO)) {
-            hijos.push(this._consumir(CAT.SUSTANTIVO));
-        } else if (this._esCat(this._ver(), CAT.PRONOMBRE_PERSONAL)) {
-            hijos.push(this._consumir(CAT.PRONOMBRE_PERSONAL));
-        } else if (this._esCat(this._ver(), CAT.PRONOMBRE_DEMOSTRATIVO)) {
-            hijos.push(this._consumir(CAT.PRONOMBRE_DEMOSTRATIVO));
+        if (this._esCat(this._ver(), CAT_SINT.SUSTANTIVO)) {
+            hijos.push(this._consumir(CAT_SINT.SUSTANTIVO));
+        } else if (this._esCat(this._ver(), CAT_SINT.PRONOMBRE_PERSONAL)) {
+            hijos.push(this._consumir(CAT_SINT.PRONOMBRE_PERSONAL));
+        } else if (this._esCat(this._ver(), CAT_SINT.PRONOMBRE_DEMOSTRATIVO)) {
+            hijos.push(this._consumir(CAT_SINT.PRONOMBRE_DEMOSTRATIVO));
         } else {
-            return null; // No hay sujeto válido
+            return null;
         }
 
         return {
@@ -214,40 +162,34 @@ class AnalizadorSintactico {
 
     // ─────────────────────────────────────────────
     // PARSEAR PREDICADO
-    // <predicado> ::= VERBO [ADVERBIO] [<objeto>]
+    // <predicado> ::= [AUXILIAR] VERBO [ADVERBIO] [<objeto>] [PREPOSICION <complemento>]
     // ─────────────────────────────────────────────
     _parsearPredicado() {
         const hijos = [];
 
-        // Auxiliar opcional (is, are, was, were, have...)
-        if (this._esCat(this._ver(), CAT.VERBO_AUXILIAR)) {
-            hijos.push(this._consumir(CAT.VERBO_AUXILIAR));
+        if (this._esCat(this._ver(), CAT_SINT.VERBO_AUXILIAR)) {
+            hijos.push(this._consumir(CAT_SINT.VERBO_AUXILIAR));
         }
 
-        // Verbo principal (obligatorio)
-        if (!this._esCat(this._ver(), CAT.VERBO)) {
+        if (!this._esCat(this._ver(), CAT_SINT.VERBO)) {
             this._registrarError(
                 `Se esperaba un VERBO pero se encontró: "${this._ver()?.token || "fin de oración"}"`,
                 this.posicion
             );
-            // Intentar recuperación: avanzar al siguiente token
             this._avanzar();
         } else {
-            hijos.push(this._consumir(CAT.VERBO));
+            hijos.push(this._consumir(CAT_SINT.VERBO));
         }
 
-        // Adverbio opcional
-        if (this._esCat(this._ver(), CAT.ADVERBIO)) {
-            hijos.push(this._consumir(CAT.ADVERBIO));
+        if (this._esCat(this._ver(), CAT_SINT.ADVERBIO)) {
+            hijos.push(this._consumir(CAT_SINT.ADVERBIO));
         }
 
-        // Objeto directo opcional
         const objeto = this._parsearObjeto();
         if (objeto) hijos.push(objeto);
 
-        // Preposición + complemento opcional
-        if (this._esCat(this._ver(), CAT.PREPOSICION)) {
-            hijos.push(this._consumir(CAT.PREPOSICION));
+        if (this._esCat(this._ver(), CAT_SINT.PREPOSICION)) {
+            hijos.push(this._consumir(CAT_SINT.PREPOSICION));
             const compPrep = this._parsearSujeto();
             if (compPrep) hijos.push(compPrep);
         }
@@ -261,25 +203,25 @@ class AnalizadorSintactico {
 
     // ─────────────────────────────────────────────
     // PARSEAR OBJETO
-    // <objeto> ::= [ARTICULO] SUSTANTIVO [ADJETIVO]
+    // <objeto> ::= [ARTICULO] [ADJETIVO] SUSTANTIVO | PRONOMBRE
     // ─────────────────────────────────────────────
     _parsearObjeto() {
         const hijos = [];
 
-        if (this._esCat(this._ver(), CAT.ARTICULO)) {
-            hijos.push(this._consumir(CAT.ARTICULO));
+        if (this._esCat(this._ver(), CAT_SINT.ARTICULO)) {
+            hijos.push(this._consumir(CAT_SINT.ARTICULO));
         }
 
-        if (this._esCat(this._ver(), CAT.ADJETIVO)) {
-            hijos.push(this._consumir(CAT.ADJETIVO));
+        if (this._esCat(this._ver(), CAT_SINT.ADJETIVO)) {
+            hijos.push(this._consumir(CAT_SINT.ADJETIVO));
         }
 
-        if (this._esCat(this._ver(), CAT.SUSTANTIVO)) {
-            hijos.push(this._consumir(CAT.SUSTANTIVO));
-        } else if (this._esCat(this._ver(), CAT.PRONOMBRE_PERSONAL)) {
-            hijos.push(this._consumir(CAT.PRONOMBRE_PERSONAL));
+        if (this._esCat(this._ver(), CAT_SINT.SUSTANTIVO)) {
+            hijos.push(this._consumir(CAT_SINT.SUSTANTIVO));
+        } else if (this._esCat(this._ver(), CAT_SINT.PRONOMBRE_PERSONAL)) {
+            hijos.push(this._consumir(CAT_SINT.PRONOMBRE_PERSONAL));
         } else {
-            return null; // No hay objeto
+            return null;
         }
 
         return {
@@ -296,9 +238,9 @@ class AnalizadorSintactico {
     _parsearNegativa(nodoSujeto) {
         const hijos = [nodoSujeto];
 
-        hijos.push(this._consumir(CAT.VERBO_AUXILIAR)); // does, do, did, is...
-        hijos.push(this._consumir(CAT.NEGACION));        // not / n't
-        hijos.push(this._consumir(CAT.VERBO));
+        hijos.push(this._consumir(CAT_SINT.VERBO_AUXILIAR));
+        hijos.push(this._consumir(CAT_SINT.NEGACION));
+        hijos.push(this._consumir(CAT_SINT.VERBO));
 
         const objeto = this._parsearObjeto();
         if (objeto) hijos.push(objeto);
@@ -317,7 +259,7 @@ class AnalizadorSintactico {
     _parsearInterrogativa() {
         const hijos = [];
 
-        hijos.push(this._consumir(CAT.VERBO_AUXILIAR));
+        hijos.push(this._consumir(CAT_SINT.VERBO_AUXILIAR));
 
         const sujeto = this._parsearSujeto();
         if (!sujeto) {
@@ -326,8 +268,8 @@ class AnalizadorSintactico {
             hijos.push(sujeto);
         }
 
-        if (this._esCat(this._ver(), CAT.VERBO)) {
-            hijos.push(this._consumir(CAT.VERBO));
+        if (this._esCat(this._ver(), CAT_SINT.VERBO)) {
+            hijos.push(this._consumir(CAT_SINT.VERBO));
         } else {
             this._registrarError("Oración interrogativa: falta el verbo principal.", this.posicion);
         }
@@ -335,7 +277,6 @@ class AnalizadorSintactico {
         const objeto = this._parsearObjeto();
         if (objeto) hijos.push(objeto);
 
-        // Signo de pregunta obligatorio
         if (this._ver()?.token === "?") {
             hijos.push({ tipo: "SIGNO_PUNTUACION", token: "?" });
             this._avanzar();
@@ -359,14 +300,14 @@ class AnalizadorSintactico {
         hijos.push({ tipo: "EXCLAMACION_INICIO", token: this._ver()?.token });
         this._avanzar();
 
-        if (this._esCat(this._ver(), CAT.ARTICULO)) {
-            hijos.push(this._consumir(CAT.ARTICULO));
+        if (this._esCat(this._ver(), CAT_SINT.ARTICULO)) {
+            hijos.push(this._consumir(CAT_SINT.ARTICULO));
         }
-        if (this._esCat(this._ver(), CAT.ADJETIVO)) {
-            hijos.push(this._consumir(CAT.ADJETIVO));
+        if (this._esCat(this._ver(), CAT_SINT.ADJETIVO)) {
+            hijos.push(this._consumir(CAT_SINT.ADJETIVO));
         }
-        if (this._esCat(this._ver(), CAT.SUSTANTIVO)) {
-            hijos.push(this._consumir(CAT.SUSTANTIVO));
+        if (this._esCat(this._ver(), CAT_SINT.SUSTANTIVO)) {
+            hijos.push(this._consumir(CAT_SINT.SUSTANTIVO));
         }
 
         if (this._ver()?.token === "!") {
@@ -389,7 +330,7 @@ class AnalizadorSintactico {
     // ─────────────────────────────────────────────
     _parsearExclamativaSimple() {
         const hijos = [];
-        hijos.push(this._consumir(CAT.INTERJECCIÓN));
+        hijos.push(this._consumir(CAT_SINT.INTERJECCION));
 
         if (this._ver()?.token === "!") {
             hijos.push({ tipo: "SIGNO_PUNTUACION", token: "!" });
@@ -406,16 +347,16 @@ class AnalizadorSintactico {
     }
 
     // ─────────────────────────────────────────────
-    // ORACIÓN COMPUESTA (coordinada)
+    // ORACIÓN COMPUESTA
     // <compuesta> ::= <oracion_simple> CONJUNCION_COORD <oracion_simple>
     // ─────────────────────────────────────────────
     _parsearCompuesta(nodoSujeto, nodoPredicado) {
         const hijos = [
             { tipo: "ORACION_SIMPLE", hijos: [nodoSujeto, nodoPredicado] },
-            this._consumir(CAT.CONJUNCION_COORD)
+            this._consumir(CAT_SINT.CONJUNCION_COORD)
         ];
 
-        const sujeto2   = this._parsearSujeto();
+        const sujeto2    = this._parsearSujeto();
         const predicado2 = sujeto2 ? this._parsearPredicado() : null;
 
         if (!sujeto2 || !predicado2) {
@@ -438,7 +379,7 @@ class AnalizadorSintactico {
     _parsearSubordinada(nodoSujeto, nodoPredicado) {
         const hijos = [
             { tipo: "ORACION_PRINCIPAL", hijos: [nodoSujeto, nodoPredicado] },
-            this._consumir(CAT.CONJUNCION_SUB)
+            this._consumir(CAT_SINT.CONJUNCION_SUB)
         ];
 
         const sujeto2    = this._parsearSujeto();
@@ -461,22 +402,18 @@ class AnalizadorSintactico {
     // MÉTODOS UTILITARIOS
     // ─────────────────────────────────────────────
 
-    // Ver token en la posición actual (sin consumir)
     _ver() {
         return this.tokens[this.posicion] || null;
     }
 
-    // Ver token en posición actual + offset (sin consumir)
     _verEn(offset) {
         return this.tokens[this.posicion + offset] || null;
     }
 
-    // Avanzar el puntero
     _avanzar() {
         this.posicion++;
     }
 
-    // Consumir un token de la categoría esperada
     _consumir(categoriaEsperada) {
         const tokenActual = this._ver();
 
@@ -494,57 +431,41 @@ class AnalizadorSintactico {
 
         this._avanzar();
         return {
-            tipo:   categoriaEsperada,
-            token:  tokenActual.token,
-            lema:   tokenActual.lema   || tokenActual.token,
+            tipo:     categoriaEsperada,
+            token:    tokenActual.token,
+            lema:     tokenActual.lema || tokenActual.token,
             posicion: this.posicion - 1
         };
     }
 
-    // Verificar si un token pertenece a una categoría
     _esCat(token, categoria) {
         return token && token.categoria === categoria;
     }
 
-    // Verificar si es token auxiliar (do, does, did, is, are, was, were...)
     _esAuxiliar(token) {
-        return token && token.categoria === CAT.VERBO_AUXILIAR;
+        return token && token.categoria === CAT_SINT.VERBO_AUXILIAR;
     }
 
-    // Verificar si es negación (not, n't)
     _esNegacion(token) {
-        return token && token.categoria === CAT.NEGACION;
+        return token && token.categoria === CAT_SINT.NEGACION;
     }
 
-    // Verificar si es inicio de exclamativa (What, How)
     _esExclamacion(token) {
         return token && ["what", "how"].includes(token.token?.toLowerCase());
     }
 
-    // Verificar si es interjección
     _esInterjeccion(token) {
-        return token && token.categoria === CAT.INTERJECCIÓN;
+        return token && token.categoria === CAT_SINT.INTERJECCION;
     }
 
-
-    // Registrar un error en la lista
     _registrarError(mensaje, posicion) {
         this.errores.push({
-            tipo:      "SINTÁCTICO",
-            posicion:  posicion,
-            token:     this.tokens[posicion]?.token || "N/A",
-            mensaje:   mensaje
+            tipo:     "SINTÁCTICO",
+            posicion: posicion,
+            token:    this.tokens[posicion]?.token || "N/A",
+            mensaje:  mensaje
         });
     }
 }
 
-// ─────────────────────────────────────────────
-// EXPORTAR para usar en el proyecto principal
-// ─────────────────────────────────────────────
-// Si el proyecto usa módulos ES6:
-// export { AnalizadorSintactico };
-
-// Si el proyecto es JS puro sin módulos (HTML simple):
-// simplemente usar la clase directamente en el mismo scope.
-// Al final de sintactico.js
 module.exports = { AnalizadorSintactico };

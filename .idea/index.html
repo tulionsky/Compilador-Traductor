@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Compilador Traductor EN-ES</title>
     <link rel="stylesheet" href="css/styles.css">
-
     <!-- compromise.js — análisis léxico inglés -->
     <script src="https://unpkg.com/compromise@14.14.0/builds/compromise.js"></script>
 </head>
@@ -21,14 +20,24 @@
         <label>Texto de entrada</label>
         <textarea id="texto-entrada" placeholder="Escribe una oración en inglés..."></textarea>
         <button id="btn-analizar">Analizar</button>
+        <button id="btn-limpiar">Limpiar</button>
     </section>
 
     <!-- Panel de salida -->
     <section id="panel-salida">
         <label>Traducción</label>
         <textarea id="texto-salida" readonly placeholder="La traducción aparecerá aquí..."></textarea>
+        <div id="tipo-oracion-badge"></div>
     </section>
 </main>
+
+<!-- Árbol de derivación -->
+<section id="seccion-sintactico">
+    <h2>Árbol de Derivación</h2>
+    <div id="arbol-derivacion">
+        <p>El árbol aparecerá aquí después de analizar.</p>
+    </div>
+</section>
 
 <!-- Tabla de símbolos -->
 <section id="seccion-tabla">
@@ -70,6 +79,8 @@
 </section>
 
 <script src="js/lexico.js"></script>
+<script src="js/sintactico.js"></script>
+<script src="js/main.js"></script>
 
 </body>
 </html>
