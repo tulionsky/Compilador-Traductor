@@ -467,5 +467,3 @@ class AnalizadorSintactico {
         });
     }
 }
-
-module.exports = { AnalizadorSintactico };

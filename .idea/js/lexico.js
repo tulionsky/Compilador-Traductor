@@ -85,7 +85,7 @@ function clasificarAdverbio(token) {
     if (LISTAS.adv_afirmacion.includes(t))  return CAT.ADVERBIO_AFIRMACION;
     if (LISTAS.adv_negacion.includes(t))    return CAT.ADVERBIO_NEGACION;
     if (LISTAS.adv_duda.includes(t))        return CAT.ADVERBIO_DUDA;
-    return CAT.ADVERBIO_MODO; // por defecto si compromise lo detectó como adverbio
+    return CAT.ADVERBIO_MODO;
 }
 
 // ─── CLASIFICADOR PRINCIPAL DE UN TOKEN ──────────────────────
@@ -99,16 +99,16 @@ function clasificarToken(token) {
     if (REGEX.numero_cardinal.test(t)) return { lema: t, categoria: CAT.NUMERAL_CARDINAL,   numero: '-', genero: '-' };
 
     // Listas de palabras conocidas
-    if (LISTAS.articulos.includes(t))           return { lema: t, categoria: CAT.ARTICULO,                numero: '-',      genero: '-' };
-    if (LISTAS.posesivos.includes(t))           return { lema: t, categoria: CAT.POSESIVO,                numero: '-',      genero: '-' };
-    if (LISTAS.demostrativos.includes(t))       return { lema: t, categoria: CAT.DEMOSTRATIVO,            numero: '-',      genero: '-' };
-    if (LISTAS.indefinidos.includes(t))         return { lema: t, categoria: CAT.INDEFINIDO,              numero: '-',      genero: '-' };
-    if (LISTAS.pron_personales.includes(t))     return { lema: t, categoria: CAT.PRONOMBRE_PERSONAL,      numero: '-',      genero: '-' };
-    if (LISTAS.pron_interrogativos.includes(t)) return { lema: t, categoria: CAT.PRONOMBRE_INTERROGATIVO, numero: '-',      genero: '-' };
-    if (LISTAS.conj_coord.includes(t))          return { lema: t, categoria: CAT.CONJUNCION_COORDINANTE,  numero: '-',      genero: '-' };
-    if (LISTAS.conj_subord.includes(t))         return { lema: t, categoria: CAT.CONJUNCION_SUBORDINANTE, numero: '-',      genero: '-' };
-    if (LISTAS.preposiciones.includes(t))       return { lema: t, categoria: CAT.PREPOSICION,             numero: '-',      genero: '-' };
-    if (LISTAS.interjecciones.includes(t))      return { lema: t, categoria: CAT.INTERJECCION,            numero: '-',      genero: '-' };
+    if (LISTAS.articulos.includes(t))           return { lema: t, categoria: CAT.ARTICULO,                numero: '-', genero: '-' };
+    if (LISTAS.posesivos.includes(t))           return { lema: t, categoria: CAT.POSESIVO,                numero: '-', genero: '-' };
+    if (LISTAS.demostrativos.includes(t))       return { lema: t, categoria: CAT.DEMOSTRATIVO,            numero: '-', genero: '-' };
+    if (LISTAS.indefinidos.includes(t))         return { lema: t, categoria: CAT.INDEFINIDO,              numero: '-', genero: '-' };
+    if (LISTAS.pron_personales.includes(t))     return { lema: t, categoria: CAT.PRONOMBRE_PERSONAL,      numero: '-', genero: '-' };
+    if (LISTAS.pron_interrogativos.includes(t)) return { lema: t, categoria: CAT.PRONOMBRE_INTERROGATIVO, numero: '-', genero: '-' };
+    if (LISTAS.conj_coord.includes(t))          return { lema: t, categoria: CAT.CONJUNCION_COORDINANTE,  numero: '-', genero: '-' };
+    if (LISTAS.conj_subord.includes(t))         return { lema: t, categoria: CAT.CONJUNCION_SUBORDINANTE, numero: '-', genero: '-' };
+    if (LISTAS.preposiciones.includes(t))       return { lema: t, categoria: CAT.PREPOSICION,             numero: '-', genero: '-' };
+    if (LISTAS.interjecciones.includes(t))      return { lema: t, categoria: CAT.INTERJECCION,            numero: '-', genero: '-' };
     if (LISTAS.adv_tiempo.includes(t) || LISTAS.adv_lugar.includes(t) ||
         LISTAS.adv_cantidad.includes(t) || LISTAS.adv_afirmacion.includes(t) ||
         LISTAS.adv_negacion.includes(t) || LISTAS.adv_duda.includes(t))
@@ -117,17 +117,20 @@ function clasificarToken(token) {
     // compromise.js para lo que no está en las listas
     const doc = nlp(token);
     let categoria = CAT.DESCONOCIDO;
-    let lema = t;
-    let numero = '-';
-    let genero = '-';
+    let lema      = t;
+    let numero    = '-';
+    let genero    = '-';
 
     if (doc.verbs().found) {
         categoria = CAT.VERBO;
-        lema = doc.verbs().toInfinitive().text() || t;
+        lema      = doc.verbs().toInfinitive().text() || t;
     } else if (doc.nouns().found) {
         categoria = CAT.SUSTANTIVO;
-        lema      = doc.nouns().toSingular().text() || t;
+        // ── FIX: detectar plural ANTES de lematizar ──────────
+        // toSingular() transforma el token, por lo que isPlural()
+        // ya no funciona correctamente si se llama después.
         numero    = doc.nouns().isPlural().found ? 'plural' : 'singular';
+        lema      = doc.nouns().toSingular().text() || t;
     } else if (doc.adjectives().found) {
         categoria = CAT.ADJETIVO;
         lema      = doc.adjectives().text() || t;
@@ -207,4 +210,3 @@ function renderizarTablaErrores(errores) {
         cuerpo.appendChild(tr);
     });
 }
-

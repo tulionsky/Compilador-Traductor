@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Compilador Traductor EN-ES</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href=".idea/css/styles.css">
     <!-- compromise.js — análisis léxico inglés -->
     <script src="https://unpkg.com/compromise@14.14.0/builds/compromise.js"></script>
 </head>
@@ -35,7 +35,7 @@
 <section id="seccion-sintactico">
     <h2>Árbol de Derivación</h2>
     <div id="arbol-derivacion">
-        <p>El árbol aparecerá aquí después de analizar.</p>
+        <p class="placeholder-text">El árbol aparecerá aquí después de analizar.</p>
     </div>
 </section>
 
@@ -54,12 +54,12 @@
         </tr>
         </thead>
         <tbody id="cuerpo-tabla">
-        <!-- Se llena dinámicamente -->
+        <tr><td colspan="6" class="placeholder-text">Sin datos aún.</td></tr>
         </tbody>
     </table>
 </section>
 
-<!-- Tabla de errores -->
+<!-- Tabla de errores (léxico + sintáctico + semántico) -->
 <section id="seccion-errores">
     <h2>Tabla de Errores</h2>
     <table id="tabla-errores">
@@ -73,14 +73,44 @@
         </tr>
         </thead>
         <tbody id="cuerpo-errores">
-        <!-- Se llena dinámicamente -->
+        <tr><td colspan="5" class="placeholder-text">Sin errores detectados.</td></tr>
         </tbody>
     </table>
 </section>
 
-<script src="js/lexico.js"></script>
-<script src="js/sintactico.js"></script>
-<script src="js/main.js"></script>
+<!-- ── SEMÁNTICO (Mijeli) ──────────────────────────────────── -->
+
+<!-- Errores semánticos -->
+<section id="seccion-semantico">
+    <h2>Análisis Semántico</h2>
+    <table id="tabla-errores-semanticos">
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>Regla</th>
+            <th>Descripción</th>
+        </tr>
+        </thead>
+        <tbody id="cuerpo-errores-semanticos">
+        <tr><td colspan="3" class="placeholder-text">Sin errores semánticos.</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- Sugerencias de corrección -->
+<section id="seccion-sugerencias">
+    <h2>Sugerencias de Corrección</h2>
+    <div id="contenedor-sugerencias">
+        <p class="placeholder-text">Sin sugerencias.</p>
+    </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────────── -->
+
+<script src=".idea/js/lexico.js"></script>
+<script src=".idea/js/sintactico.js"></script>
+<script src=".idea/js/semantico.js"></script>
+<script src=".idea/js/main.js"></script>
 
 </body>
 </html>

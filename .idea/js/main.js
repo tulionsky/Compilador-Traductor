@@ -1,6 +1,6 @@
 // ============================================================
 // main.js — Integración del Compilador
-// Conecta: Léxico (Tulio) + Sintáctico (Melki)
+// Conecta: Léxico (Tulio) + Sintáctico (Melki) + Semántico + Traducción (Mijeli)
 // ============================================================
 
 // ─── VERBOS AUXILIARES ───────────────────────────────────────
@@ -68,24 +68,32 @@ function renderizarTablaSimbolos(tablaSimbolos) {
 }
 
 // ─── RENDERIZAR TABLA DE ERRORES ─────────────────────────────
-function renderizarTablaErrores(erroresLexicos, erroresSintacticos) {
+// Ahora recibe también errores semánticos (Mijeli)
+function renderizarTablaErrores(erroresLexicos, erroresSintacticos, erroresSemanticos = []) {
     const cuerpo = document.getElementById('cuerpo-errores');
     cuerpo.innerHTML = '';
 
     const todosLosErrores = [
         ...erroresLexicos.map(e => ({
-            tipo: 'LÉXICO',
-            posicion: e.posicion,
-            token: e.token,
+            tipo:        'LÉXICO',
+            posicion:    e.posicion,
+            token:       e.token,
             descripcion: e.descripcion,
-            clase: 'error-lexico'
+            clase:       'error-lexico'
         })),
         ...erroresSintacticos.map(e => ({
-            tipo: 'SINTÁCTICO',
-            posicion: e.posicion,
-            token: e.token,
+            tipo:        'SINTÁCTICO',
+            posicion:    e.posicion,
+            token:       e.token,
             descripcion: e.mensaje,
-            clase: 'error-sintactico'
+            clase:       'error-sintactico'
+        })),
+        ...erroresSemanticos.map(e => ({
+            tipo:        'SEMÁNTICO',
+            posicion:    '-',
+            token:       e.token_problematico || '-',
+            descripcion: `[${e.regla}] ${e.descripcion}`,
+            clase:       'error-semantico'
         }))
     ];
 
@@ -136,8 +144,15 @@ function renderizarArbol(nodo, esRaiz = true) {
     return html;
 }
 
+// ─── ESTADO DE FASE — muestra al usuario en qué fase está el análisis ──
+function mostrarEstadoFase(mensaje, tipo = 'info') {
+    const badge = document.getElementById('tipo-oracion-badge');
+    const clases = { info: 'badge-analizando', valida: 'badge-valida', invalida: 'badge-invalida' };
+    badge.innerHTML = `<span class="oracion-badge ${clases[tipo] || ''}">${mensaje}</span>`;
+}
+
 // ─── EVENTO PRINCIPAL ────────────────────────────────────────
-document.getElementById('btn-analizar').addEventListener('click', () => {
+document.getElementById('btn-analizar').addEventListener('click', async () => {
     const texto = document.getElementById('texto-entrada').value.trim();
 
     if (!texto) {
@@ -145,50 +160,78 @@ document.getElementById('btn-analizar').addEventListener('click', () => {
         return;
     }
 
-    // 1. LÉXICO (Tulio)
-    const { tablaSimbolos, errores: erroresLexicos } = analizarLexico(texto);
-    renderizarTablaSimbolos(tablaSimbolos);
+    // Deshabilitar botón mientras se analiza
+    const btnAnalizar = document.getElementById('btn-analizar');
+    btnAnalizar.disabled = true;
+    btnAnalizar.textContent = 'Analizando...';
 
-    // 2. SINTÁCTICO (Melki)
-    const tokensAdaptados = adaptarTokens(tablaSimbolos);
-    const analizador      = new AnalizadorSintactico();
-    const resultadoSint   = analizador.analizar(tokensAdaptados);
+    // Limpiar sugerencias y errores semánticos de la corrida anterior
+    renderizarErroresSemanticos([], null);
+    renderizarSugerencias([]);
 
-    // Renderizar tabla de errores (léxicos + sintácticos juntos)
-    renderizarTablaErrores(erroresLexicos, resultadoSint.errores);
+    try {
+        // ── FASE 1: LÉXICO (Tulio) ────────────────────────────
+        mostrarEstadoFase('🔍 Fase 1/3 — Análisis léxico...', 'info');
+        const { tablaSimbolos, errores: erroresLexicos } = analizarLexico(texto);
+        renderizarTablaSimbolos(tablaSimbolos);
 
-    // Renderizar árbol de derivación
-    const contenedorArbol = document.getElementById('arbol-derivacion');
-    contenedorArbol.innerHTML = renderizarArbol(resultadoSint.arbol);
+        // ── FASE 2: SINTÁCTICO (Melki) ────────────────────────
+        mostrarEstadoFase('🔍 Fase 2/3 — Análisis sintáctico...', 'info');
+        const tokensAdaptados = adaptarTokens(tablaSimbolos);
+        const analizador      = new AnalizadorSintactico();
+        const resultadoSint   = analizador.analizar(tokensAdaptados);
 
-    // Mostrar badge del tipo de oración
-    const badgeContainer = document.getElementById('tipo-oracion-badge');
-    if (resultadoSint.valido) {
-        badgeContainer.innerHTML = `
-            <span class="oracion-badge badge-valida">
-                ✅ ${resultadoSint.tipo} — Oración válida
-            </span>`;
-        // Traducción: solo si no hay errores léxicos ni sintácticos
-        if (erroresLexicos.length === 0) {
-            traducir(texto);
+        // Renderizar árbol de derivación
+        document.getElementById('arbol-derivacion').innerHTML = renderizarArbol(resultadoSint.arbol);
+
+        // Si hay errores léxicos o sintácticos, detenemos aquí
+        if (erroresLexicos.length > 0 || !resultadoSint.valido) {
+            renderizarTablaErrores(erroresLexicos, resultadoSint.errores, []);
+            mostrarEstadoFase('❌ Errores en análisis léxico/sintáctico — se omiten fases 3 y 4', 'invalida');
+            document.getElementById('texto-salida').value = '';
+            return;
         }
-    } else {
-        badgeContainer.innerHTML = `
-            <span class="oracion-badge badge-invalida">
-                ❌ Errores sintácticos detectados
-            </span>`;
-        document.getElementById('texto-salida').value = '';
-    }
 
-    // Log en consola para debugging
-    console.log('─── RESULTADO LÉXICO ───');
-    console.log('Tabla de símbolos:', tablaSimbolos);
-    console.log('Errores léxicos:', erroresLexicos);
-    console.log('─── RESULTADO SINTÁCTICO ───');
-    console.log('Tipo:', resultadoSint.tipo);
-    console.log('Válida:', resultadoSint.valido);
-    console.log('Árbol:', resultadoSint.arbol);
-    console.log('Errores sintácticos:', resultadoSint.errores);
+        // ── FASE 3: SEMÁNTICO (Mijeli) ────────────────────────
+        mostrarEstadoFase('🔍 Fase 3/3 — Análisis semántico (Gemini)...', 'info');
+        const resultadoSem = await analizarSemantico(texto, tablaSimbolos, resultadoSint.tipo);
+
+        // Renderizar errores semánticos y sugerencias
+        renderizarErroresSemanticos(resultadoSem.errores, resultadoSem.advertencia || null);
+        renderizarSugerencias(resultadoSem.sugerencias);
+
+        // Tabla unificada de errores (léxico + sintáctico + semántico)
+        renderizarTablaErrores(erroresLexicos, resultadoSint.errores, resultadoSem.errores);
+
+        if (!resultadoSem.valido) {
+            mostrarEstadoFase(`❌ ${resultadoSint.tipo} — Errores semánticos detectados`, 'invalida');
+            document.getElementById('texto-salida').value = '';
+            return;
+        }
+
+        // ── FASE 4: TRADUCCIÓN (Mijeli) ───────────────────────
+        mostrarEstadoFase(`✅ ${resultadoSint.tipo} — Traduciendo...`, 'info');
+        await traducir(texto);
+        mostrarEstadoFase(`✅ ${resultadoSint.tipo} — Oración válida`, 'valida');
+
+        // Log en consola para debugging
+        console.log('─── RESULTADO LÉXICO ───');
+        console.log('Tabla de símbolos:', tablaSimbolos);
+        console.log('Errores léxicos:', erroresLexicos);
+        console.log('─── RESULTADO SINTÁCTICO ───');
+        console.log('Tipo:', resultadoSint.tipo);
+        console.log('Válida:', resultadoSint.valido);
+        console.log('Árbol:', resultadoSint.arbol);
+        console.log('─── RESULTADO SEMÁNTICO ───');
+        console.log('Válido:', resultadoSem.valido);
+        console.log('Errores:', resultadoSem.errores);
+        console.log('Sugerencias:', resultadoSem.sugerencias);
+
+    } finally {
+        // Rehabilitar botón siempre, aunque haya error
+        btnAnalizar.disabled = false;
+        btnAnalizar.textContent = 'Analizar';
+    }
 });
 
 // ─── TRADUCCIÓN (MyMemory API) ────────────────────────────────
@@ -210,10 +253,14 @@ async function traducir(texto) {
 
 // ─── BOTÓN LIMPIAR ────────────────────────────────────────────
 document.getElementById('btn-limpiar').addEventListener('click', () => {
-    document.getElementById('texto-entrada').value      = '';
-    document.getElementById('texto-salida').value       = '';
-    document.getElementById('cuerpo-tabla').innerHTML   = '<tr><td colspan="6" class="placeholder-text">Sin datos aún.</td></tr>';
-    document.getElementById('cuerpo-errores').innerHTML = '<tr><td colspan="5" class="placeholder-text">Sin errores detectados.</td></tr>';
+    document.getElementById('texto-entrada').value        = '';
+    document.getElementById('texto-salida').value         = '';
+    document.getElementById('cuerpo-tabla').innerHTML     = '<tr><td colspan="6" class="placeholder-text">Sin datos aún.</td></tr>';
+    document.getElementById('cuerpo-errores').innerHTML   = '<tr><td colspan="5" class="placeholder-text">Sin errores detectados.</td></tr>';
     document.getElementById('arbol-derivacion').innerHTML = '<p class="placeholder-text">El árbol aparecerá aquí después de analizar.</p>';
     document.getElementById('tipo-oracion-badge').innerHTML = '';
+
+    // Limpiar secciones semánticas (Mijeli)
+    renderizarErroresSemanticos([], null);
+    renderizarSugerencias([]);
 });

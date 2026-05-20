@@ -96,3 +96,174 @@ tr:last-child td {
 tr:hover {
     background: #f0f4f8;
 }
+
+/* ── PLACEHOLDER TEXT ─────────────────────────────────────── */
+.placeholder-text {
+    color: #aaa;
+    font-style: italic;
+}
+
+/* ── TIPOS DE ERROR EN TABLA UNIFICADA ───────────────────── */
+.error-lexico {
+    color: #c0392b;
+    font-weight: 600;
+}
+
+.error-sintactico {
+    color: #e67e22;
+    font-weight: 600;
+}
+
+.error-semantico {
+    color: #8e44ad;
+    font-weight: 600;
+}
+
+.error-advertencia {
+    color: #f39c12;
+    font-style: italic;
+}
+
+/* ── BADGE DE TIPO DE ORACIÓN ────────────────────────────── */
+.oracion-badge {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.badge-valida {
+    background: #eafaf1;
+    color: #1e8449;
+    border: 1px solid #a9dfbf;
+}
+
+.badge-invalida {
+    background: #fdedec;
+    color: #c0392b;
+    border: 1px solid #f5b7b1;
+}
+
+.badge-analizando {
+    background: #eaf4fb;
+    color: #2471a3;
+    border: 1px solid #aed6f1;
+}
+
+/* ── SECCIONES SEMÁNTICAS ────────────────────────────────── */
+#seccion-semantico,
+#seccion-sugerencias {
+    margin-bottom: 32px;
+}
+
+/* ── TARJETAS DE SUGERENCIAS ─────────────────────────────── */
+#contenedor-sugerencias {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.tarjeta-sugerencia {
+    background: white;
+    border-left: 4px solid #8e44ad;
+    border-radius: 8px;
+    padding: 14px 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.sug-explicacion {
+    font-size: 0.95rem;
+    color: #444;
+}
+
+.sug-comparacion {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+}
+
+.sug-original {
+    background: #fdedec;
+    color: #c0392b;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+.sug-flecha {
+    color: #888;
+    font-size: 1.1rem;
+}
+
+.sug-correccion {
+    background: #eafaf1;
+    color: #1e8449;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+.btn-aplicar {
+    align-self: flex-start;
+    padding: 6px 16px;
+    background: #8e44ad;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    width: fit-content;
+}
+
+.btn-aplicar:hover {
+    background: #6c3483;
+}
+
+/* ── ÁRBOL DE DERIVACIÓN ─────────────────────────────────── */
+.arbol-nodo {
+    margin: 4px 0 4px 16px;
+    padding: 4px 8px;
+    border-left: 2px solid #aed6f1;
+    font-size: 0.88rem;
+}
+
+.arbol-root {
+    margin-left: 0;
+    border-left: 3px solid #2c3e50;
+    font-weight: 600;
+}
+
+.nodo-tipo {
+    color: #2471a3;
+    font-weight: 600;
+    margin-right: 6px;
+}
+
+.nodo-token {
+    color: #1e8449;
+    font-family: monospace;
+    margin-right: 6px;
+}
+
+.nodo-regla {
+    color: #888;
+    font-size: 0.82rem;
+    font-style: italic;
+}
+
+.nodo-children {
+    margin-left: 12px;
+}
+
+/* ── BOTÓN DESHABILITADO ─────────────────────────────────── */
+button:disabled {
+    background: #95a5a6;
+    cursor: not-allowed;
+}
