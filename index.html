@@ -21,6 +21,33 @@
         <textarea id="texto-entrada" placeholder="Escribe una oración en inglés..."></textarea>
         <button id="btn-analizar">Analizar</button>
         <button id="btn-limpiar">Limpiar</button>
+        <!-- ── CONTROLES OCR + VOZ (Tulio) ─────────────────── -->
+        <div id="controles-extra">
+
+            <!-- Reconocimiento de voz -->
+            <button id="btn-microfono" title="Dictar texto">🎤 Dictar</button>
+            <span id="estado-microfono"></span>
+
+            <!-- Carga de imagen para OCR -->
+            <label id="label-imagen" for="input-imagen" title="Cargar imagen con texto">
+                🖼️ Cargar imagen
+            </label>
+            <input type="file" id="input-imagen" accept="image/*" style="display:none">
+
+            <!-- Zona drag & drop -->
+            <div id="zona-drop">
+                Arrastra una imagen aquí
+            </div>
+
+            <!-- Barra de progreso OCR -->
+            <div id="contenedor-progreso" style="display:none">
+                <span id="label-progreso">Extrayendo texto...</span>
+                <div id="barra-progreso-fondo">
+                    <div id="barra-progreso-fill"></div>
+                </div>
+            </div>
+
+        </div>
     </section>
 
     <!-- Panel de salida -->
@@ -106,11 +133,13 @@
 </section>
 
 <!-- ─────────────────────────────────────────────────────────── -->
-
+<!-- Tesseract.js — OCR -->
+<script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
 <script src=".idea/js/lexico.js"></script>
 <script src=".idea/js/sintactico.js"></script>
 <script src=".idea/js/semantico.js"></script>
 <script src=".idea/js/main.js"></script>
+<script src=".idea/js/ocr-voz.js"></script>
 
 </body>
 </html>
