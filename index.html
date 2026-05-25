@@ -1,12 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Compilador Traductor EN-ES</title>
-    <link rel="stylesheet" href=".idea/css/styles.css">
+    <link rel="stylesheet" href="styles.css">
+
     <!-- compromise.js — análisis léxico inglés -->
     <script src="https://unpkg.com/compromise@14.14.0/builds/compromise.js"></script>
+
+    <!-- Tesseract.js — OCR (Tulio) -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+    <!-- Typo.js — validación ortográfica -->
+    <script src="libs/typo.js"></script>
 </head>
 <body>
 
@@ -17,43 +24,59 @@
 <main>
     <!-- Panel de entrada -->
     <section id="panel-entrada">
-        <label>Texto de entrada</label>
-        <textarea id="texto-entrada" placeholder="Escribe una oración en inglés..."></textarea>
-        <button id="btn-analizar">Analizar</button>
-        <button id="btn-limpiar">Limpiar</button>
-        <!-- ── CONTROLES OCR + VOZ (Tulio) ─────────────────── -->
-        <div id="controles-extra">
 
-            <!-- Reconocimiento de voz -->
+        <!-- Selector de idioma -->
+        <div id="selector-idioma">
+            <label>Idioma de entrada:</label>
+            <select id="idioma-entrada">
+                <option value="en">Inglés → Español</option>
+                <option value="es">Español → Inglés</option>
+            </select>
+        </div>
+
+        <label>Texto de entrada</label>
+        <textarea id="texto-entrada"
+                  placeholder="Escribe una oración..."></textarea>
+
+        <div id="botones-principales">
+            <button id="btn-analizar">Analizar</button>
+            <button id="btn-limpiar">Limpiar</button>
+        </div>
+
+        <!-- Controles OCR + Voz (Tulio) -->
+        <div id="controles-extra">
             <button id="btn-microfono" title="Dictar texto">🎤 Dictar</button>
             <span id="estado-microfono"></span>
 
-            <!-- Carga de imagen para OCR -->
-            <label id="label-imagen" for="input-imagen" title="Cargar imagen con texto">
+            <label id="label-imagen" for="input-imagen"
+                   title="Cargar imagen con texto">
                 🖼️ Cargar imagen
             </label>
-            <input type="file" id="input-imagen" accept="image/*" style="display:none">
+            <input type="file" id="input-imagen"
+                   accept="image/*" style="display:none">
 
-            <!-- Zona drag & drop -->
-            <div id="zona-drop">
-                Arrastra una imagen aquí
-            </div>
+            <div id="zona-drop">Arrastra una imagen aquí</div>
 
-            <!-- Barra de progreso OCR -->
             <div id="contenedor-progreso" style="display:none">
                 <span id="label-progreso">Extrayendo texto...</span>
                 <div id="barra-progreso-fondo">
                     <div id="barra-progreso-fill"></div>
                 </div>
             </div>
-
         </div>
+
+        <!-- Estado de carga de diccionarios -->
+        <div id="estado-diccionarios">
+            ⏳ Cargando diccionarios...
+        </div>
+
     </section>
 
     <!-- Panel de salida -->
     <section id="panel-salida">
         <label>Traducción</label>
-        <textarea id="texto-salida" readonly placeholder="La traducción aparecerá aquí..."></textarea>
+        <textarea id="texto-salida" readonly
+                  placeholder="La traducción aparecerá aquí..."></textarea>
         <div id="tipo-oracion-badge"></div>
     </section>
 </main>
@@ -62,7 +85,9 @@
 <section id="seccion-sintactico">
     <h2>Árbol de Derivación</h2>
     <div id="arbol-derivacion">
-        <p class="placeholder-text">El árbol aparecerá aquí después de analizar.</p>
+        <p class="placeholder-text">
+            El árbol aparecerá aquí después de analizar.
+        </p>
     </div>
 </section>
 
@@ -81,12 +106,16 @@
         </tr>
         </thead>
         <tbody id="cuerpo-tabla">
-        <tr><td colspan="6" class="placeholder-text">Sin datos aún.</td></tr>
+        <tr>
+            <td colspan="6" class="placeholder-text">
+                Sin datos aún.
+            </td>
+        </tr>
         </tbody>
     </table>
 </section>
 
-<!-- Tabla de errores (léxico + sintáctico + semántico) -->
+<!-- Tabla de errores -->
 <section id="seccion-errores">
     <h2>Tabla de Errores</h2>
     <table id="tabla-errores">
@@ -100,14 +129,16 @@
         </tr>
         </thead>
         <tbody id="cuerpo-errores">
-        <tr><td colspan="5" class="placeholder-text">Sin errores detectados.</td></tr>
+        <tr>
+            <td colspan="5" class="placeholder-text">
+                Sin errores detectados.
+            </td>
+        </tr>
         </tbody>
     </table>
 </section>
 
-<!-- ── SEMÁNTICO (Mijeli) ──────────────────────────────────── -->
-
-<!-- Errores semánticos -->
+<!-- Análisis semántico (Mijeli — pendiente) -->
 <section id="seccion-semantico">
     <h2>Análisis Semántico</h2>
     <table id="tabla-errores-semanticos">
@@ -119,12 +150,16 @@
         </tr>
         </thead>
         <tbody id="cuerpo-errores-semanticos">
-        <tr><td colspan="3" class="placeholder-text">Sin errores semánticos.</td></tr>
+        <tr>
+            <td colspan="3" class="placeholder-text">
+                Sin errores semánticos.
+            </td>
+        </tr>
         </tbody>
     </table>
 </section>
 
-<!-- Sugerencias de corrección -->
+<!-- Sugerencias (Mijeli — pendiente) -->
 <section id="seccion-sugerencias">
     <h2>Sugerencias de Corrección</h2>
     <div id="contenedor-sugerencias">
@@ -132,14 +167,8 @@
     </div>
 </section>
 
-<!-- ─────────────────────────────────────────────────────────── -->
-<!-- Tesseract.js — OCR -->
-<script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
-<script src=".idea/js/lexico.js"></script>
-<script src=".idea/js/sintactico.js"></script>
-<script src=".idea/js/semantico.js"></script>
-<script src=".idea/js/main.js"></script>
-<script src=".idea/js/ocr-voz.js"></script>
+<!-- Scripts — type="module" para usar import/export -->
+<script type="module" src="src/ui/UiController.js"></script>
 
 </body>
 </html>
