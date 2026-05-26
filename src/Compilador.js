@@ -1,42 +1,38 @@
 // ============================================================
 // Compilador.js — Orquestador principal
 // Coordina: Léxico → Sintáctico → Semántico → Traducción
-// Soporta: oraciones individuales, párrafos y archivos .txt
 // Compilador Traductor Inglés-Español 2026
 // ============================================================
 
 import { analizarLexico }       from './lexico/Lexer.js';
 import { AnalizadorSintactico } from './sintactico/Parser.js';
 import { segmentarOraciones }   from './sintactico/Segmentador.js';
+import { analizarSemantico }    from './semantico/Semantico.js';
 import { TablaSimbolos }        from './data/TablaSimbolos.js';
 import { TablaErrores }         from './data/TablaErrores.js';
 
-// ─── VERBOS AUXILIARES ────────────────────────────────────────
-const VERBOS_AUXILIARES_EN = [
+// ─── AUXILIARES PUROS EN INGLÉS ───────────────────────────────
+// have/has/had NO están aquí — pueden ser verbos principales
+const SOLO_AUXILIARES_EN = [
     'is','are','was','were','am','be','been','being',
-    'do','does','did','done',
-    'have','has','had',
+    'do','does','did',
     'will','would','shall','should',
     'can','could','may','might','must'
 ];
 
-const VERBOS_AUXILIARES_ES = [
+// ─── AUXILIARES EN ESPAÑOL ────────────────────────────────────
+const AUXILIARES_ES = [
     'es','son','era','eran','fue','fueron','será','serán',
     'soy','somos','sois','eres','sido','siendo',
     'estoy','estás','está','estamos','estáis','están',
     'estaba','estaban','estuvo','estuvieron',
-    'he','has','ha','hemos','habéis','han',
-    'había','habían','hubo',
-    'tengo','tienes','tiene','tenemos','tenéis','tienen'
+    'he','ha','hemos','habéis','han',
+    'había','habían','hubo'
 ];
 
 // ─── ADAPTADOR DE TOKENS ──────────────────────────────────────
 function adaptarTokens(tablaSimbolos, idioma) {
-    const auxiliares = idioma === 'en'
-        ? VERBOS_AUXILIARES_EN
-        : VERBOS_AUXILIARES_ES;
-
-    return tablaSimbolos.map(fila => {
+    return tablaSimbolos.map((fila, index) => {
         let categoria = fila.categoria;
 
         // SUSTANTIVO_PROPIO → SUSTANTIVO para el parser
@@ -48,23 +44,40 @@ function adaptarTokens(tablaSimbolos, idioma) {
         if (categoria === 'ADVERBIO_NEGACION' &&
             ['not', "n't", 'no', 'nunca', 'jamás', 'tampoco'].includes(fila.lema)) {
             categoria = 'NEGACION';
-        }
-        // Resto de adverbios → ADVERBIO genérico
-        else if (categoria.startsWith('ADVERBIO_')) {
+        } else if (categoria.startsWith('ADVERBIO_')) {
             categoria = 'ADVERBIO';
         }
 
-        // Verbos auxiliares
-        if (categoria === 'VERBO' &&
-            auxiliares.includes(fila.lema.toLowerCase())) {
-            categoria = 'VERBO_AUXILIAR';
+        if (idioma === 'en') {
+            // Auxiliares puros → siempre VERBO_AUXILIAR
+            if (categoria === 'VERBO' &&
+                SOLO_AUXILIARES_EN.includes(fila.lema.toLowerCase())) {
+                categoria = 'VERBO_AUXILIAR';
+            }
+
+            // have/has/had → VERBO_AUXILIAR solo si el siguiente token es VERBO
+            // Ej: "She has studied" → auxiliar
+            // Ej: "I have a apple" → verbo principal
+            if (['have', 'has', 'had'].includes(fila.lema.toLowerCase()) &&
+                (categoria === 'VERBO' || categoria === 'VERBO_AUXILIAR')) {
+                const siguiente = tablaSimbolos[index + 1];
+                if (siguiente && siguiente.categoria === 'VERBO') {
+                    categoria = 'VERBO_AUXILIAR';
+                } else {
+                    categoria = 'VERBO';
+                }
+            }
         }
 
-        return {
-            token:     fila.token,
-            lema:      fila.lema,
-            categoria: categoria
-        };
+        if (idioma === 'es') {
+            // Auxiliares en español → VERBO_AUXILIAR
+            if (categoria === 'VERBO' &&
+                AUXILIARES_ES.includes(fila.lema.toLowerCase())) {
+                categoria = 'VERBO_AUXILIAR';
+            }
+        }
+
+        return { token: fila.token, lema: fila.lema, categoria };
     });
 }
 
@@ -93,6 +106,7 @@ export class Compilador {
 
         let hayErroresLexicos     = false;
         let hayErroresSintacticos = false;
+        let hayErroresSemanticos  = false;
 
         for (let i = 0; i < oraciones.length; i++) {
             const oracion = oraciones[i];
@@ -103,20 +117,22 @@ export class Compilador {
             const { tablaSimbolos, errores: erroresLex } = analizarLexico(oracion, idioma);
 
             const filasConNum   = tablaSimbolos.map(f => ({ ...f, oracion: num }));
-            const erroresConNum = erroresLex.map(e => ({
+            const erroresLexNum = erroresLex.map(e => ({
                 ...e,
                 descripcion: `[Oración ${num}] ${e.descripcion}`
             }));
 
             this.tablaSimbolos.agregarVarias(filasConNum);
-            this.tablaErrores.agregarVarios(erroresConNum);
+            this.tablaErrores.agregarVarios(erroresLexNum);
 
             if (erroresLex.length > 0) {
                 hayErroresLexicos = true;
                 this.resultados.push({
                     oracion, num,
                     arbol: null, tipo: null,
-                    valido: false, fase: 'LÉXICO'
+                    valido: false, fase: 'LÉXICO',
+                    erroresSemanticos: [], sugerencias: [],
+                    oracionCorregida: null
                 });
                 continue;
             }
@@ -127,11 +143,11 @@ export class Compilador {
             const parser          = new AnalizadorSintactico();
             const resultadoSint   = parser.analizar(tokensAdaptados, idioma);
 
-            const erroresSintConNum = resultadoSint.errores.map(e => ({
+            const erroresSintNum = resultadoSint.errores.map(e => ({
                 ...e,
                 descripcion: `[Oración ${num}] ${e.descripcion}`
             }));
-            this.tablaErrores.agregarVarios(erroresSintConNum);
+            this.tablaErrores.agregarVarios(erroresSintNum);
 
             if (!resultadoSint.valido) {
                 hayErroresSintacticos = true;
@@ -139,41 +155,79 @@ export class Compilador {
                     oracion, num,
                     arbol:  resultadoSint.arbol,
                     tipo:   resultadoSint.tipo,
-                    valido: false, fase: 'SINTÁCTICO'
+                    valido: false, fase: 'SINTÁCTICO',
+                    erroresSemanticos: [], sugerencias: [],
+                    oracionCorregida: null
                 });
                 continue;
             }
 
+            // ── FASE 3: SEMÁNTICO ─────────────────────────────
+            onFase(`🔍 Oración ${num}/${oraciones.length} — Análisis semántico...`, 'info');
+            const resultadoSem = await analizarSemantico(
+                oracion,
+                tablaSimbolos,
+                resultadoSint.tipo,
+                idioma
+            );
+
+            const erroresSemNum = resultadoSem.errores.map(e => ({
+                tipo:        'SEMÁNTICO',
+                posicion:    '-',
+                token:       e.token_problematico || '-',
+                descripcion: `[Oración ${num}] [${e.regla}] ${e.descripcion}`,
+                sugerencia:  '-'
+            }));
+            this.tablaErrores.agregarVarios(erroresSemNum);
+
+            if (!resultadoSem.valido) {
+                hayErroresSemanticos = true;
+                this.resultados.push({
+                    oracion, num,
+                    arbol:  resultadoSint.arbol,
+                    tipo:   resultadoSint.tipo,
+                    valido: false, fase: 'SEMÁNTICO',
+                    erroresSemanticos: resultadoSem.errores,
+                    sugerencias:       resultadoSem.sugerencias,
+                    oracionCorregida:  resultadoSem.oracionCorregida,
+                    advertencia:       resultadoSem.advertencia || null
+                });
+                continue;
+            }
+
+            // ── FASE 4: TRADUCCIÓN (pendiente) ────────────────
             this.resultados.push({
                 oracion, num,
                 arbol:  resultadoSint.arbol,
                 tipo:   resultadoSint.tipo,
-                valido: true, fase: 'COMPLETO'
+                valido: true, fase: 'COMPLETO',
+                erroresSemanticos: [],
+                sugerencias:       resultadoSem.sugerencias,
+                oracionCorregida:  resultadoSem.oracionCorregida,
+                advertencia:       resultadoSem.advertencia || null
             });
         }
 
-        // ── FASE 3: SEMÁNTICO (pendiente — Mijeli) ────────────
-        // TODO: implementar analizarSemantico()
-
-        // ── FASE 4: TRADUCCIÓN (pendiente — Mijeli) ───────────
-        // TODO: implementar traducir()
-
+        // ── ESTADO FINAL ──────────────────────────────────────
         if (hayErroresLexicos) {
             onFase('❌ Errores léxicos detectados', 'invalida');
         } else if (hayErroresSintacticos) {
             onFase('❌ Errores sintácticos detectados', 'invalida');
+        } else if (hayErroresSemanticos) {
+            onFase('❌ Errores semánticos detectados', 'invalida');
         } else {
             const tipos = this.resultados.map(r => r.tipo).join(' | ');
-            onFase(`✅ ${tipos} — Listo (semántico y traducción pendientes)`, 'valida');
+            onFase(`✅ ${tipos} — Listo (traducción pendiente)`, 'valida');
         }
-
-        console.log('Resultados por oración:', this.resultados);
-        console.log('Primer arbol:', this.resultados[0]?.arbol);
 
         return this._resultadoFinal('COMPLETO');
     }
 
     _resultadoFinal(faseDetenida) {
+        const todosErroresSem  = this.resultados.flatMap(r => r.erroresSemanticos || []);
+        const todasSugerencias = this.resultados.flatMap(r => r.sugerencias       || []);
+        const advertencia      = this.resultados.find(r => r.advertencia)?.advertencia || null;
+
         return {
             faseDetenida,
             tablaSimbolos:        this.tablaSimbolos.obtener(),
@@ -186,9 +240,10 @@ export class Compilador {
                 tipo:    r.tipo,
                 valido:  r.valido
             })),
-            traduccion:        null,
-            erroresSemanticos: [],
-            sugerencias:       []
+            erroresSemanticos: todosErroresSem,
+            sugerencias:       todasSugerencias,
+            advertencia,
+            traduccion:        null
         };
     }
 }

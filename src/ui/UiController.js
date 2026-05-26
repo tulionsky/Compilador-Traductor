@@ -4,12 +4,14 @@
 // Compilador Traductor Inglés-Español 2026
 // ============================================================
 
-import { Compilador }                from '../Compilador.js';
+import { Compilador }                        from '../Compilador.js';
 import { cargarDiccionarios,
-    diccionariosCargados }      from '../lexico/Diccionario.js';
+    diccionariosCargados }              from '../lexico/Diccionario.js';
 import { renderizarTablaSimbolos,
-    renderizarTablaErrores }    from './RenderTablas.js';
-import { renderizarArboles }         from './RenderArbol.js';
+    renderizarTablaErrores }            from './RenderTablas.js';
+import { renderizarArboles }                 from './RenderArbol.js';
+import { renderizarErroresSemanticos,
+    renderizarSugerencias }             from './RenderSugerencias.js';
 
 const compilador = new Compilador();
 
@@ -35,7 +37,7 @@ async function inicializar() {
     }
 }
 
-// ─── OBTENER IDIOMA SELECCIONADO ──────────────────────────────
+// ─── OBTENER IDIOMA ───────────────────────────────────────────
 function obtenerIdioma() {
     return document.getElementById('idioma-entrada').value;
 }
@@ -93,28 +95,30 @@ document.getElementById('btn-analizar').addEventListener('click', async () => {
         const idioma    = obtenerIdioma();
         const resultado = await compilador.compilar(texto, idioma, mostrarEstadoFase);
 
-        // Renderizar tabla de símbolos
+        // Tabla de símbolos
         renderizarTablaSimbolos(resultado.tablaSimbolos);
 
-        // Renderizar tabla de errores unificada
+        // Tabla de errores unificada
         renderizarTablaErrores(resultado.tablaErrores);
 
-        // Solo mostrar árbol si no hay errores léxicos ni sintácticos
-        const hayErrores = resultado.tablaErrores.some(
+        // Árbol — solo si no hay errores léxicos ni sintácticos
+        const hayErroresCriticos = resultado.tablaErrores.some(
             e => e.tipo === 'LÉXICO' || e.tipo === 'SINTÁCTICO'
         );
-
-        document.getElementById('arbol-derivacion').innerHTML = hayErrores
+        document.getElementById('arbol-derivacion').innerHTML = hayErroresCriticos
             ? '<p class="placeholder-text">El árbol aparecerá aquí cuando no haya errores léxicos ni sintácticos.</p>'
             : renderizarArboles(resultado.arboles);
 
-        // Mostrar traducción si existe
+        // Errores semánticos y sugerencias
+        renderizarErroresSemanticos(
+            resultado.erroresSemanticos,
+            resultado.advertencia
+        );
+        renderizarSugerencias(resultado.sugerencias);
+
+        // Traducción
         document.getElementById('texto-salida').value =
             resultado.traduccion || '';
-
-        // TODO: Mijeli — renderizar errores semánticos y sugerencias
-        // renderizarErroresSemanticos(resultado.erroresSemanticos);
-        // renderizarSugerencias(resultado.sugerencias);
 
     } finally {
         bloquearBoton(false);
@@ -134,5 +138,5 @@ document.getElementById('idioma-entrada').addEventListener('change', () => {
             : 'Escribe una oración en español...';
 });
 
-// ─── INICIALIZAR AL CARGAR LA PÁGINA ─────────────────────────
+// ─── INICIALIZAR ──────────────────────────────────────────────
 inicializar();
