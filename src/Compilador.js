@@ -8,11 +8,11 @@ import { analizarLexico }       from './lexico/Lexer.js';
 import { AnalizadorSintactico } from './sintactico/Parser.js';
 import { segmentarOraciones }   from './sintactico/Segmentador.js';
 import { analizarSemantico }    from './semantico/Semantico.js';
+import { traducir }             from './traductor/Traductor.js';
 import { TablaSimbolos }        from './data/TablaSimbolos.js';
 import { TablaErrores }         from './data/TablaErrores.js';
 
 // ─── AUXILIARES PUROS EN INGLÉS ───────────────────────────────
-// have/has/had NO están aquí — pueden ser verbos principales
 const SOLO_AUXILIARES_EN = [
     'is','are','was','were','am','be','been','being',
     'do','does','did',
@@ -56,8 +56,6 @@ function adaptarTokens(tablaSimbolos, idioma) {
             }
 
             // have/has/had → VERBO_AUXILIAR solo si el siguiente token es VERBO
-            // Ej: "She has studied" → auxiliar
-            // Ej: "I have a apple" → verbo principal
             if (['have', 'has', 'had'].includes(fila.lema.toLowerCase()) &&
                 (categoria === 'VERBO' || categoria === 'VERBO_AUXILIAR')) {
                 const siguiente = tablaSimbolos[index + 1];
@@ -70,7 +68,6 @@ function adaptarTokens(tablaSimbolos, idioma) {
         }
 
         if (idioma === 'es') {
-            // Auxiliares en español → VERBO_AUXILIAR
             if (categoria === 'VERBO' &&
                 AUXILIARES_ES.includes(fila.lema.toLowerCase())) {
                 categoria = 'VERBO_AUXILIAR';
@@ -132,7 +129,7 @@ export class Compilador {
                     arbol: null, tipo: null,
                     valido: false, fase: 'LÉXICO',
                     erroresSemanticos: [], sugerencias: [],
-                    oracionCorregida: null
+                    oracionCorregida: null, traduccion: null
                 });
                 continue;
             }
@@ -157,7 +154,7 @@ export class Compilador {
                     tipo:   resultadoSint.tipo,
                     valido: false, fase: 'SINTÁCTICO',
                     erroresSemanticos: [], sugerencias: [],
-                    oracionCorregida: null
+                    oracionCorregida: null, traduccion: null
                 });
                 continue;
             }
@@ -190,12 +187,16 @@ export class Compilador {
                     erroresSemanticos: resultadoSem.errores,
                     sugerencias:       resultadoSem.sugerencias,
                     oracionCorregida:  resultadoSem.oracionCorregida,
-                    advertencia:       resultadoSem.advertencia || null
+                    advertencia:       resultadoSem.advertencia || null,
+                    traduccion:        null
                 });
                 continue;
             }
 
-            // ── FASE 4: TRADUCCIÓN (pendiente) ────────────────
+            // ── FASE 4: TRADUCCIÓN ────────────────────────────
+            onFase(`🔍 Oración ${num}/${oraciones.length} — Traduciendo...`, 'info');
+            const resultadoTrad = await traducir(oracion, tablaSimbolos, idioma);
+
             this.resultados.push({
                 oracion, num,
                 arbol:  resultadoSint.arbol,
@@ -204,7 +205,8 @@ export class Compilador {
                 erroresSemanticos: [],
                 sugerencias:       resultadoSem.sugerencias,
                 oracionCorregida:  resultadoSem.oracionCorregida,
-                advertencia:       resultadoSem.advertencia || null
+                advertencia:       resultadoSem.advertencia || null,
+                traduccion:        resultadoTrad.traduccion
             });
         }
 
@@ -217,7 +219,7 @@ export class Compilador {
             onFase('❌ Errores semánticos detectados', 'invalida');
         } else {
             const tipos = this.resultados.map(r => r.tipo).join(' | ');
-            onFase(`✅ ${tipos} — Listo (traducción pendiente)`, 'valida');
+            onFase(`✅ ${tipos} — Traducción completada`, 'valida');
         }
 
         return this._resultadoFinal('COMPLETO');
@@ -227,6 +229,12 @@ export class Compilador {
         const todosErroresSem  = this.resultados.flatMap(r => r.erroresSemanticos || []);
         const todasSugerencias = this.resultados.flatMap(r => r.sugerencias       || []);
         const advertencia      = this.resultados.find(r => r.advertencia)?.advertencia || null;
+
+        // Unir traducciones de todas las oraciones válidas
+        const traduccion = this.resultados
+            .filter(r => r.traduccion)
+            .map(r => r.traduccion)
+            .join(' ') || null;
 
         return {
             faseDetenida,
@@ -243,7 +251,7 @@ export class Compilador {
             erroresSemanticos: todosErroresSem,
             sugerencias:       todasSugerencias,
             advertencia,
-            traduccion:        null
+            traduccion
         };
     }
 }

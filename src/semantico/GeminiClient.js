@@ -4,8 +4,8 @@
 // Compilador Traductor Inglés-Español 2026
 // ============================================================
 
-const GEMINI_API_KEY = "AIzaSyBDokJ0d16i8sZmI8y1Q-Beer9EpRrVDSI";
-const GEMINI_URL     = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+const GEMINI_API_KEY = "AIzaSyDyJdyVuWBnV6_Th4X7_yi8Mirx4lIkz1Y";
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 
 // ─── CONSTRUIR PROMPT ─────────────────────────────────────────
 function construirPrompt(texto, tablaSimbolos, tipoOracion, idioma) {
