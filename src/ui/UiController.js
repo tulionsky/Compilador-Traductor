@@ -120,6 +120,9 @@ document.getElementById('btn-analizar').addEventListener('click', async () => {
         document.getElementById('texto-salida').value =
             resultado.traduccion || '';
 
+        // Notificar a ControladorAudio que hay traducción disponible
+        window.dispatchEvent(new CustomEvent('traduccion-lista'));
+
     } finally {
         bloquearBoton(false);
     }

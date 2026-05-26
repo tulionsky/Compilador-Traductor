@@ -78,6 +78,22 @@
         <textarea id="texto-salida" readonly
                   placeholder="La traducción aparecerá aquí..."></textarea>
         <div id="tipo-oracion-badge"></div>
+
+        <!-- Controles de síntesis de voz (Melki) -->
+        <div id="controles-audio">
+            <button id="btn-play"  title="Leer en voz alta">▶ Reproducir</button>
+            <button id="btn-pausa" title="Pausar" disabled>⏸ Pausar</button>
+            <button id="btn-stop"  title="Detener" disabled>⏹ Detener</button>
+            <span   id="estado-voz"></span>
+        </div>
+
+        <!-- Barra de carga del modelo Kokoro -->
+        <div id="contenedor-progreso-voz" style="display:none">
+            <span id="label-progreso-voz">Cargando modelo de voz...</span>
+            <div id="barra-progreso-voz-fondo">
+                <div id="barra-progreso-voz-fill"></div>
+            </div>
+        </div>
     </section>
 </main>
 
@@ -169,6 +185,7 @@
 
 <!-- Scripts — type="module" para usar import/export -->
 <script type="module" src="src/ui/UiController.js"></script>
+<script type="module" src="src/audio/ControladorAudio.js"></script>
 <script src="src/ui/ocr-voz.js"></script>
 </body>
 </html>
