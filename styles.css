@@ -715,7 +715,18 @@ textarea#texto-entrada::placeholder {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
     gap: 16px;
-    align-items: start;
+    align-items: stretch; /* Fix 3: ambos paneles con el mismo alto */
+}
+
+/* Fix 3: paneles se estiran para igualar altura */
+.panel-principal .panel-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.panel-principal .panel-card textarea {
+    flex: 1;
+    min-height: 140px;
 }
 
 .panel-card {
@@ -778,7 +789,7 @@ textarea#texto-entrada::placeholder {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding-top: 60px;
+    padding-top: 0; /* Fix 3: sin padding-top fijo ya que los paneles se estiran */
 }
 
 .flecha-icono {
@@ -1203,6 +1214,36 @@ tbody tr:last-child td { border-bottom: none; }
     cursor: pointer;
     transition: var(--transition-smooth);
     letter-spacing: 0.04em;
+}
+
+/* ─── BOTÓN RE-TRADUCIR (aparece al aplicar todas las correcciones) ─── */
+.btn-retraducir {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    background: linear-gradient(135deg, var(--accent-violet), var(--kirby-pink-dim));
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-lg);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: opacity 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 16px rgba(139, 92, 246, 0.35);
+}
+
+.btn-retraducir:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
+}
+
+.btn-retraducir:active {
+    transform: translateY(0);
+    opacity: 1;
 }
 
 .btn-aplicar:hover {

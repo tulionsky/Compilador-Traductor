@@ -86,14 +86,15 @@ export function renderizarSugerencias(sugerencias) {
 
         // ─── BOTÓN APLICAR ─────────────────────────────────────
         card.querySelector('.btn-aplicar').addEventListener('click', () => {
-            // Aplicar en el textarea de ingreso
-            const textarea = document.getElementById('texto-entrada');
-            if (textarea) {
-                textarea.value = textarea.value.replace(
-                    new RegExp(sug.original.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
-                    sug.correccion
-                );
-            }
+            // Fix 1: Aplicar corrección en AMBOS textareas (ingreso y resultado visible)
+            const escapeRegex = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = () => new RegExp(escapeRegex(sug.original), 'gi');
+
+            const textareaIngreso   = document.getElementById('texto-entrada');
+            const textareaResultado = document.getElementById('texto-entrada-resultado');
+
+            if (textareaIngreso)   textareaIngreso.value   = textareaIngreso.value.replace(regex(), sug.correccion);
+            if (textareaResultado) textareaResultado.value = textareaResultado.value.replace(regex(), sug.correccion);
 
             // Animación de salida
             card.style.transition = 'opacity 0.3s ease, transform 0.3s ease, max-height 0.4s ease';
@@ -110,12 +111,28 @@ export function renderizarSugerencias(sugerencias) {
 
             setTimeout(() => {
                 card.remove();
-                // Si no quedan tarjetas mostrar mensaje
+                // Si no quedan tarjetas: mostrar mensaje + botón re-traducir (Fix 2)
                 const restantes = contenedor.querySelectorAll('.tarjeta-sugerencia');
                 if (restantes.length === 0) {
                     contenedor.innerHTML = `
                         <p class="placeholder-text">✅ Todas las correcciones aplicadas.</p>
+                        <div style="text-align:center; margin-top:14px;">
+                            <button id="btn-retraducir" class="btn-retraducir">
+                                ⚡ Traducir de nuevo
+                            </button>
+                        </div>
                     `;
+
+                    // Fix 2: Evento re-traducir — vuelve a ingreso y relanza análisis
+                    document.getElementById('btn-retraducir')?.addEventListener('click', () => {
+                        if (window.KirbyMind?.irA) {
+                            window.KirbyMind.irA('ingreso');
+                        }
+                        setTimeout(() => {
+                            document.getElementById('btn-analizar')?.click();
+                        }, 350);
+                    });
+
                     // Ocultar zona si no hay errores semánticos tampoco
                     const cuerpoSem = document.getElementById('cuerpo-errores-semanticos');
                     const hayErroresSem = cuerpoSem &&

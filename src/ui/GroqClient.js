@@ -6,7 +6,7 @@
 // Compilador Traductor Inglés-Español 2026
 // ============================================================
 
-const GROQ_API_KEY = 'API_KEY';
+const GROQ_API_KEY = '';
 const GROQ_URL     = 'https://api.groq.com/openai/v1/chat/completions';
 const GROQ_MODEL   = 'llama-3.1-8b-instant';
 
