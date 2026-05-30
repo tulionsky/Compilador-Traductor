@@ -1128,6 +1128,110 @@ tbody tr:last-child td { border-bottom: none; }
 .arbol-nodo .nodo-token { color: var(--accent-cyan); }
 .arbol-nodo .nodo-regla { color: var(--text-muted); font-size: 0.7rem; }
 
+/* ─── PESTAÑAS ÁRBOL ────────────────────────────────────────── */
+.arbol-tabs-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.arbol-tabs {
+    display: flex;
+    gap: 6px;
+    padding: 0 0 14px 0;
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: 16px;
+}
+
+.arbol-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-subtle);
+    background: transparent;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.arbol-tab:hover {
+    border-color: var(--accent-violet);
+    color: var(--text-secondary);
+    background: rgba(124,58,237,0.08);
+}
+
+.arbol-tab.activa {
+    border-color: var(--accent-violet);
+    background: rgba(124,58,237,0.15);
+    color: var(--accent-violet2);
+}
+
+.arbol-panel-texto,
+.arbol-panel-grafico {
+    display: none;
+}
+
+.arbol-panel-texto.activo,
+.arbol-panel-grafico.activo {
+    display: block;
+}
+
+/* ─── PANEL GRÁFICO SVG ──────────────────────────────────────── */
+.arbol-svg-wrapper {
+    position: relative;
+    width: 100%;
+    height: 420px;
+    background: rgba(13,13,26,0.6);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.arbol-svg-controles {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 10;
+}
+
+.arbol-btn-zoom {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    line-height: 1;
+}
+
+.arbol-btn-zoom:hover {
+    border-color: var(--accent-violet);
+    color: var(--accent-violet2);
+    background: rgba(124,58,237,0.15);
+}
+
+.arbol-svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    user-select: none;
+}
+
 /* ─── SUGERENCIAS ────────────────────────────────────────────── */
 #contenedor-sugerencias {
     padding: 16px;

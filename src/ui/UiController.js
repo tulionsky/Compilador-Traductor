@@ -9,7 +9,7 @@ import { cargarDiccionarios,
     diccionariosCargados }            from '../lexico/Diccionario.js';
 import { renderizarTablaSimbolos,
     renderizarTablaErrores }          from './RenderTablas.js';
-import { renderizarArboles }               from './RenderArbol.js';
+import { renderizarArboles, guardarNodosArbol, registrarListenerPestanas } from './RenderArbol.js';
 import { renderizarErroresSemanticos,
     renderizarSugerencias }           from './RenderSugerencias.js';
 import { procesarYMostrarSugerencias }     from './RenderSugerenciasIA.js';
@@ -129,9 +129,14 @@ document.getElementById('btn-analizar').addEventListener('click', async () => {
         const hayErroresCriticos = resultado.tablaErrores.some(
             e => e.tipo === 'LÉXICO' || e.tipo === 'SINTÁCTICO'
         );
-        document.getElementById('arbol-derivacion').innerHTML = hayErroresCriticos
-            ? '<p class="placeholder-text">El árbol aparece cuando no hay errores léxicos ni sintácticos.</p>'
-            : renderizarArboles(resultado.arboles);
+        if (hayErroresCriticos) {
+            document.getElementById('arbol-derivacion').innerHTML =
+                '<p class="placeholder-text">El árbol aparece cuando no hay errores léxicos ni sintácticos.</p>';
+        } else {
+            guardarNodosArbol(resultado.arboles);
+            document.getElementById('arbol-derivacion').innerHTML = renderizarArboles(resultado.arboles);
+            registrarListenerPestanas();
+        }
 
         // ── Errores semánticos ────────────────────────────────
         // Fix 1: si hay errores críticos, la fase semántica no se ejecutó

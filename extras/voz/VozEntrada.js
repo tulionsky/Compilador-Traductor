@@ -5,7 +5,7 @@
 // Compilador Traductor Inglés-Español 2026
 // ============================================================
 
-    const GROQ_API_KEY    = '';
+    const GROQ_API_KEY    = 'API_KEY';
     const btnMicrofono    = document.getElementById('btn-microfono');
     const estadoMicrofono = document.getElementById('estado-microfono');
     const textoEntrada    = document.getElementById('texto-entrada');
