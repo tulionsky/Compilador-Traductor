@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compilador Traductor EN-ES</title>
+    <title>KirbyMind — Compilador Traductor EN↔ES</title>
     <link rel="stylesheet" href="styles.css">
 
     <!-- compromise.js — análisis léxico inglés -->
     <script src="https://unpkg.com/compromise@14.14.0/builds/compromise.js"></script>
 
-    <!-- Tesseract.js — OCR (Tulio) -->
+    <!-- Tesseract.js — OCR -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
     <!-- Typo.js — validación ortográfica -->
@@ -17,176 +17,318 @@
 </head>
 <body>
 
-<header>
-    <h1>Compilador Traductor Inglés ↔ Español</h1>
-</header>
+<!-- ══════════════════════════════════════════════════════
+     PANTALLA 1 — PORTADA
+     ══════════════════════════════════════════════════════ -->
+<section id="pantalla-portada" class="pantalla activa">
+    <div class="portada-badge">
+        <span>● KirbyMind v1.0 — Compiladores 2026</span>
+    </div>
 
-<main>
-    <!-- Panel de entrada -->
-    <section id="panel-entrada">
+    <div class="kirby-svg-fallback fade-up fade-up-1" id="kirby-hero-container">
+        <img src="Kirby.png" alt="KirbyMind" style="width:180px; height:180px; object-fit:contain;">
+    </div>
 
-        <!-- Selector de idioma -->
-        <div id="selector-idioma">
-            <label>Idioma de entrada:</label>
-            <select id="idioma-entrada">
-                <option value="en">Inglés → Español</option>
-                <option value="es">Español → Inglés</option>
-            </select>
+    <div class="portada-logo fade-up fade-up-2">
+        <h1>KirbyMind</h1>
+        <p class="slogan-es">Traduciendo mundos, Devorando barreras</p>
+        <p class="slogan-en">Compiling Ideas, Transforming Connections.</p>
+    </div>
+
+    <button class="btn-primario fade-up fade-up-3" id="btn-empezar">
+        Empieza a traducir
+        <span class="arrow">→</span>
+    </button>
+
+    <div class="portada-features fade-up fade-up-4">
+        <div class="feature-chip">
+            <span class="icon">🔬</span>
+            Análisis léxico
+        </div>
+        <div class="feature-chip">
+            <span class="icon">🌳</span>
+            Árbol BNF
+        </div>
+        <div class="feature-chip">
+            <span class="icon">🧠</span>
+            Semántico + IA
+        </div>
+        <div class="feature-chip">
+            <span class="icon">🌐</span>
+            EN ↔ ES
+        </div>
+        <div class="feature-chip">
+            <span class="icon">🎤</span>
+            Voz y OCR
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     PANTALLA 2 — INGRESO DE TEXTO
+     ══════════════════════════════════════════════════════ -->
+<section id="pantalla-ingreso" class="pantalla">
+    <div class="ingreso-layout">
+
+        <!-- Header -->
+        <header class="pantalla-header">
+            <div class="header-brand">
+                <div class="header-kirby">
+                    <img src="Kirby.png" alt="KirbyMind" style="width:36px; height:36px; object-fit:contain;">
+                </div>
+                <div>
+                    <h2>KirbyMind</h2>
+                    <div class="header-subtitle">// Compilador Traductor EN↔ES</div>
+                </div>
+            </div>
+
+            <div class="idioma-selector">
+                <label>Idioma origen:</label>
+                <select id="idioma-entrada">
+                    <option value="en">EN → ES</option>
+                    <option value="es">ES → EN</option>
+                </select>
+            </div>
+        </header>
+
+        <!-- Estado diccionarios -->
+        <div id="estado-diccionarios">⏳ Cargando diccionarios...</div>
+
+        <!-- Área de texto principal -->
+        <div class="entrada-card">
+            <div class="card-label">Texto de entrada</div>
+            <textarea
+                    id="texto-entrada"
+                    placeholder="Escribe una oración en inglés o español para analizar y traducir..."></textarea>
         </div>
 
-        <label>Texto de entrada</label>
-        <textarea id="texto-entrada"
-                  placeholder="Escribe una oración..."></textarea>
-
-        <div id="botones-principales">
-            <button id="btn-analizar">Analizar</button>
-            <button id="btn-limpiar">Limpiar</button>
+        <!-- Botones principales -->
+        <div class="acciones-row">
+            <button class="btn-analizar" id="btn-analizar">
+                <span>⚡</span> Analizar
+            </button>
+            <button class="btn-secundario" id="btn-limpiar">
+                <span>✕</span> Limpiar
+            </button>
         </div>
 
-        <!-- Controles OCR + Voz + Archivos (Tulio) -->
-        <div id="controles-extra">
-            <button id="btn-microfono" title="Dictar texto">🎤 Dictar</button>
+        <!-- Botones extras -->
+        <div class="extras-row">
+            <button class="btn-extra" id="btn-microfono" title="Dictar texto">
+                🎤 Dictar
+            </button>
             <span id="estado-microfono"></span>
 
-            <label id="label-imagen" for="input-imagen"
-                   title="Cargar imagen con texto">
-                🖼️ Cargar imagen
+            <label class="btn-extra" for="input-imagen" title="Cargar imagen con texto" style="cursor:pointer">
+                🖼️ Imagen
             </label>
-            <input type="file" id="input-imagen"
-                   accept="image/*" style="display:none">
+            <input type="file" id="input-imagen" accept="image/*" style="display:none">
 
-            <!-- Carga de archivos .txt (Tulio) -->
-            <button id="btn-txt" title="Cargar archivo de texto">
-                📄 Cargar .txt
+            <button class="btn-extra" id="btn-txt" title="Cargar archivo .txt">
+                📄 Archivo .txt
             </button>
-            <input type="file" id="input-txt"
-                   accept=".txt,text/plain" style="display:none">
+            <input type="file" id="input-txt" accept=".txt,text/plain" style="display:none">
+        </div>
 
-            <div id="zona-drop">Arrastra una imagen aquí</div>
+        <!-- Zona drag & drop -->
+        <div class="zona-drop-container">
+            <div id="zona-drop">Arrastra una imagen aquí para extraer texto</div>
+        </div>
 
-            <div id="contenedor-progreso" style="display:none">
-                <span id="label-progreso">Extrayendo texto...</span>
-                <div id="barra-progreso-fondo">
-                    <div id="barra-progreso-fill"></div>
+        <!-- Barra de progreso OCR -->
+        <div id="contenedor-progreso" style="display:none">
+            <span id="label-progreso">Extrayendo texto...</span>
+            <div id="barra-progreso-fondo">
+                <div id="barra-progreso-fill"></div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     PANTALLA 3 — RESULTADOS
+     ══════════════════════════════════════════════════════ -->
+<section id="pantalla-resultados" class="pantalla">
+    <div class="resultados-layout">
+
+        <!-- Header -->
+        <header class="pantalla-header">
+            <div class="header-brand">
+                <div class="header-kirby">🩷</div>
+                <div>
+                    <h2>KirbyMind</h2>
+                    <div class="header-subtitle">// Resultado del análisis</div>
+                </div>
+            </div>
+            <button class="btn-nueva-traduccion" id="btn-nueva-traduccion">
+                ← Nueva traducción
+            </button>
+        </header>
+
+        <!-- Badge de estado -->
+        <div id="tipo-oracion-badge"></div>
+
+        <!-- Panel principal: entrada + flecha + salida -->
+        <div class="panel-principal">
+            <div class="panel-card panel-entrada">
+                <div class="panel-card-label">
+                    <span>// ENTRADA</span>
+                    <span id="label-idioma-entrada">EN</span>
+                </div>
+                <textarea id="texto-entrada-resultado" readonly></textarea>
+            </div>
+
+            <div class="flecha-traduccion">
+                <div class="flecha-icono">→</div>
+            </div>
+
+            <div class="panel-card panel-salida">
+                <div class="panel-card-label">
+                    <span>// TRADUCCIÓN</span>
+                    <span id="label-idioma-salida">ES</span>
+                </div>
+                <textarea id="texto-salida" readonly
+                          placeholder="La traducción aparecerá aquí..."></textarea>
+
+                <!-- Controles de audio -->
+                <div class="audio-controls">
+                    <button class="btn-audio" id="btn-play">▶ Reproducir</button>
+                    <button class="btn-audio" id="btn-pausa" disabled>⏸ Pausar</button>
+                    <button class="btn-audio" id="btn-stop"  disabled>⏹ Detener</button>
+                    <span id="estado-voz"></span>
+                </div>
+
+                <!-- Barra de progreso voz -->
+                <div id="contenedor-progreso-voz" style="display:none">
+                    <span id="label-progreso-voz">Cargando modelo de voz...</span>
+                    <div id="barra-progreso-voz-fondo">
+                        <div id="barra-progreso-voz-fill"></div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Estado de carga de diccionarios -->
-        <div id="estado-diccionarios">
-            ⏳ Cargando diccionarios...
-        </div>
+        <!-- Errores y sugerencias — solo si existen -->
+        <div class="seccion-errores-sugerencias" id="zona-errores-sugerencias" style="display:none">
 
-    </section>
+            <!-- Sugerencias de corrección -->
+            <div class="seccion-card">
+                <div class="seccion-header">
+                    <div class="seccion-icon icon-sugerencias">💡</div>
+                    <h2>Sugerencias de Corrección</h2>
+                </div>
+                <div id="contenedor-sugerencias">
+                    <p class="placeholder-text">Sin sugerencias.</p>
+                </div>
+            </div>
 
-    <!-- Panel de salida -->
-    <section id="panel-salida">
-        <label>Traducción</label>
-        <textarea id="texto-salida" readonly
-                  placeholder="La traducción aparecerá aquí..."></textarea>
-        <div id="tipo-oracion-badge"></div>
-
-        <!-- Controles de síntesis de voz (Melki) -->
-        <div id="controles-audio">
-            <button id="btn-play"  title="Leer en voz alta">▶ Reproducir</button>
-            <button id="btn-pausa" title="Pausar" disabled>⏸ Pausar</button>
-            <button id="btn-stop"  title="Detener" disabled>⏹ Detener</button>
-            <span   id="estado-voz"></span>
-        </div>
-
-        <!-- Barra de carga del modelo de voz -->
-        <div id="contenedor-progreso-voz" style="display:none">
-            <span id="label-progreso-voz">Cargando modelo de voz...</span>
-            <div id="barra-progreso-voz-fondo">
-                <div id="barra-progreso-voz-fill"></div>
+            <!-- Errores semánticos -->
+            <div class="seccion-card">
+                <div class="seccion-header">
+                    <div class="seccion-icon icon-semantico">🔍</div>
+                    <h2>Análisis Semántico</h2>
+                </div>
+                <div class="tabla-wrapper">
+                    <table id="tabla-errores-semanticos">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Regla</th>
+                            <th>Descripción</th>
+                        </tr>
+                        </thead>
+                        <tbody id="cuerpo-errores-semanticos">
+                        <tr>
+                            <td colspan="3" class="placeholder-text">Sin errores semánticos.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-    </section>
-</main>
 
-<!-- Árbol de derivación -->
-<section id="seccion-sintactico">
-    <h2>Árbol de Derivación</h2>
-    <div id="arbol-derivacion">
-        <p class="placeholder-text">
-            El árbol aparecerá aquí después de analizar.
-        </p>
-    </div>
-</section>
+        <!-- Botón ver análisis detallado -->
+        <div style="text-align:center">
+            <button class="btn-ver-analisis" id="btn-ver-analisis">
+                Ver análisis detallado
+                <span class="chevron">▼</span>
+            </button>
+        </div>
 
-<!-- Tabla de símbolos -->
-<section id="seccion-tabla">
-    <h2>Tabla de Símbolos</h2>
-    <table id="tabla-simbolos">
-        <thead>
-        <tr>
-            <th>#</th>
-            <th>Token</th>
-            <th>Lema</th>
-            <th>Categoría</th>
-            <th>Número</th>
-            <th>Género</th>
-        </tr>
-        </thead>
-        <tbody id="cuerpo-tabla">
-        <tr>
-            <td colspan="6" class="placeholder-text">
-                Sin datos aún.
-            </td>
-        </tr>
-        </tbody>
-    </table>
-</section>
+        <!-- Análisis detallado colapsable -->
+        <div class="analisis-detallado" id="analisis-detallado">
 
-<!-- Tabla de errores -->
-<section id="seccion-errores">
-    <h2>Tabla de Errores</h2>
-    <table id="tabla-errores">
-        <thead>
-        <tr>
-            <th>#</th>
-            <th>Tipo</th>
-            <th>Posición</th>
-            <th>Token</th>
-            <th>Descripción</th>
-        </tr>
-        </thead>
-        <tbody id="cuerpo-errores">
-        <tr>
-            <td colspan="5" class="placeholder-text">
-                Sin errores detectados.
-            </td>
-        </tr>
-        </tbody>
-    </table>
-</section>
+            <!-- Tabla de errores -->
+            <div class="seccion-card">
+                <div class="seccion-header">
+                    <div class="seccion-icon icon-errores">⚠️</div>
+                    <h2>Tabla de Errores</h2>
+                </div>
+                <div class="tabla-wrapper">
+                    <table id="tabla-errores">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Tipo</th>
+                            <th>Posición</th>
+                            <th>Token</th>
+                            <th>Descripción</th>
+                        </tr>
+                        </thead>
+                        <tbody id="cuerpo-errores">
+                        <tr>
+                            <td colspan="5" class="placeholder-text">Sin errores detectados.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
-<!-- Análisis semántico -->
-<section id="seccion-semantico">
-    <h2>Análisis Semántico</h2>
-    <table id="tabla-errores-semanticos">
-        <thead>
-        <tr>
-            <th>#</th>
-            <th>Regla</th>
-            <th>Descripción</th>
-        </tr>
-        </thead>
-        <tbody id="cuerpo-errores-semanticos">
-        <tr>
-            <td colspan="3" class="placeholder-text">
-                Sin errores semánticos.
-            </td>
-        </tr>
-        </tbody>
-    </table>
-</section>
+            <!-- Grid: Tabla de símbolos + Árbol -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
 
-<!-- Sugerencias -->
-<section id="seccion-sugerencias">
-    <h2>Sugerencias de Corrección</h2>
-    <div id="contenedor-sugerencias">
-        <p class="placeholder-text">Sin sugerencias.</p>
+                <!-- Tabla de símbolos -->
+                <div class="seccion-card">
+                    <div class="seccion-header">
+                        <div class="seccion-icon icon-simbolos">📋</div>
+                        <h2>Tabla de Símbolos</h2>
+                    </div>
+                    <div class="tabla-wrapper">
+                        <table id="tabla-simbolos">
+                            <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Token</th>
+                                <th>Lema</th>
+                                <th>Categoría</th>
+                                <th>Núm</th>
+                                <th>Gén</th>
+                            </tr>
+                            </thead>
+                            <tbody id="cuerpo-tabla">
+                            <tr>
+                                <td colspan="6" class="placeholder-text">Sin datos aún.</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Árbol de derivación -->
+                <div class="seccion-card">
+                    <div class="seccion-header">
+                        <div class="seccion-icon icon-arbol">🌳</div>
+                        <h2>Árbol de Derivación</h2>
+                    </div>
+                    <div id="arbol-derivacion">
+                        <p class="placeholder-text">El árbol aparecerá aquí después de analizar.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
     </div>
 </section>
 
@@ -196,5 +338,6 @@
 <script src="extras/ocr/OcrController.js"></script>
 <script src="extras/voz/VozEntrada.js"></script>
 <script src="extras/archivos/CargaArchivos.js"></script>
+<script type="module" src="src/ui/Pantallas.js"></script>
 </body>
 </html>

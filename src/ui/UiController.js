@@ -22,18 +22,18 @@ async function inicializar() {
 
     try {
         estadoEl.textContent = '⏳ Cargando diccionarios...';
-        estadoEl.style.color = 'orange';
+        estadoEl.style.color = 'var(--accent-amber)';
 
         await cargarDiccionarios();
 
         estadoEl.textContent = '✅ Diccionarios listos';
-        estadoEl.style.color = 'green';
+        estadoEl.style.color = 'var(--accent-green)';
 
         setTimeout(() => { estadoEl.style.display = 'none'; }, 3000);
 
     } catch (e) {
-        estadoEl.textContent = '❌ Error cargando diccionarios — verifica la carpeta /dict';
-        estadoEl.style.color = 'red';
+        estadoEl.textContent = '❌ Error cargando diccionarios';
+        estadoEl.style.color = 'var(--accent-red)';
         console.error(e);
     }
 }
@@ -43,7 +43,7 @@ function obtenerIdioma() {
     return document.getElementById('idioma-entrada').value;
 }
 
-// ─── HELPERS UI ───────────────────────────────────────────────
+// ─── MOSTRAR ESTADO FASE ──────────────────────────────────────
 function mostrarEstadoFase(mensaje, tipo = 'info') {
     const badge  = document.getElementById('tipo-oracion-badge');
     const clases = {
@@ -54,9 +54,9 @@ function mostrarEstadoFase(mensaje, tipo = 'info') {
     badge.innerHTML = `<span class="oracion-badge ${clases[tipo] || ''}">${mensaje}</span>`;
 }
 
+// ─── LIMPIAR UI ───────────────────────────────────────────────
 function limpiarUI() {
     document.getElementById('texto-entrada').value        = '';
-    document.getElementById('texto-salida').value         = '';
     document.getElementById('cuerpo-tabla').innerHTML     =
         '<tr><td colspan="6" class="placeholder-text">Sin datos aún.</td></tr>';
     document.getElementById('cuerpo-errores').innerHTML   =
@@ -68,12 +68,26 @@ function limpiarUI() {
         '<tr><td colspan="3" class="placeholder-text">Sin errores semánticos.</td></tr>';
     document.getElementById('contenedor-sugerencias').innerHTML =
         '<p class="placeholder-text">Sin sugerencias.</p>';
+
+    // Ocultar zona errores/sugerencias
+    const zona = document.getElementById('zona-errores-sugerencias');
+    if (zona) zona.style.display = 'none';
+
+    // Ocultar análisis detallado
+    const detalle = document.getElementById('analisis-detallado');
+    if (detalle) detalle.classList.remove('visible');
+    const btnVer = document.getElementById('btn-ver-analisis');
+    if (btnVer) {
+        btnVer.classList.remove('abierto');
+        btnVer.innerHTML = 'Ver análisis detallado <span class="chevron">▼</span>';
+    }
 }
 
+// ─── BLOQUEAR BOTÓN ──────────────────────────────────────────
 function bloquearBoton(bloqueado) {
     const btn       = document.getElementById('btn-analizar');
     btn.disabled    = bloqueado;
-    btn.textContent = bloqueado ? 'Analizando...' : 'Analizar';
+    btn.textContent = bloqueado ? '⏳ Analizando...' : '⚡ Analizar';
 }
 
 // ─── EVENTO: ANALIZAR ─────────────────────────────────────────
@@ -96,28 +110,44 @@ document.getElementById('btn-analizar').addEventListener('click', async () => {
         const idioma    = obtenerIdioma();
         const resultado = await compilador.compilar(texto, idioma, mostrarEstadoFase);
 
-        // ── Tabla de símbolos ─────────────────────────────
+        // ── Navegar a pantalla de resultados ─────────────────
+        if (window.KirbyMind?.irA) {
+            await window.KirbyMind.irA('resultados');
+        }
+
+        // ── Mostrar texto original en panel resultado ─────────
+        const textoResultado = document.getElementById('texto-entrada-resultado');
+        if (textoResultado) textoResultado.value = texto;
+
+        // ── Tabla de símbolos ─────────────────────────────────
         renderizarTablaSimbolos(resultado.tablaSimbolos);
 
-        // ── Tabla de errores ──────────────────────────────
+        // ── Tabla de errores ──────────────────────────────────
         renderizarTablaErrores(resultado.tablaErrores);
 
-        // ── Árbol — solo sin errores léxicos/sintácticos ──
+        // ── Árbol — solo sin errores léxicos/sintácticos ──────
         const hayErroresCriticos = resultado.tablaErrores.some(
             e => e.tipo === 'LÉXICO' || e.tipo === 'SINTÁCTICO'
         );
         document.getElementById('arbol-derivacion').innerHTML = hayErroresCriticos
-            ? '<p class="placeholder-text">El árbol aparecerá aquí cuando no haya errores léxicos ni sintácticos.</p>'
+            ? '<p class="placeholder-text">El árbol aparece cuando no hay errores léxicos ni sintácticos.</p>'
             : renderizarArboles(resultado.arboles);
 
-        // ── Errores semánticos ────────────────────────────
+        // ── Errores semánticos ────────────────────────────────
         renderizarErroresSemanticos(
             resultado.erroresSemanticos,
             resultado.advertencia
         );
 
-        // ── Sugerencias — locales + Groq ──────────────────
-        if (resultado.tablaErrores.length > 0) {
+        // ── Sugerencias — locales + Groq ──────────────────────
+        const hayErrores = resultado.tablaErrores.length > 0 ||
+            resultado.erroresSemanticos?.length > 0;
+
+        if (hayErrores) {
+            // Mostrar zona de errores/sugerencias
+            const zona = document.getElementById('zona-errores-sugerencias');
+            if (zona) zona.style.display = 'grid';
+
             mostrarEstadoFase('💡 Generando sugerencias...', 'info');
         }
 
@@ -128,7 +158,7 @@ document.getElementById('btn-analizar').addEventListener('click', async () => {
             idioma
         );
 
-        // ── Badge final ───────────────────────────────────
+        // ── Badge final ───────────────────────────────────────
         if (resultado.tablaErrores.some(e => e.tipo === 'LÉXICO')) {
             mostrarEstadoFase('❌ Errores léxicos detectados', 'invalida');
         } else if (resultado.tablaErrores.some(e => e.tipo === 'SINTÁCTICO')) {
@@ -137,13 +167,20 @@ document.getElementById('btn-analizar').addEventListener('click', async () => {
             mostrarEstadoFase('❌ Errores semánticos detectados', 'invalida');
         }
 
-        // ── Traducción — solo sin errores ─────────────────
+        // ── Traducción — solo sin errores ─────────────────────
         document.getElementById('texto-salida').value =
             resultado.traduccion || '';
 
+        // Notificar ControladorAudio
         if (resultado.traduccion) {
             window.dispatchEvent(new CustomEvent('traduccion-lista'));
         }
+
+        // ── Labels de idioma en resultados ────────────────────
+        const labelEntrada = document.getElementById('label-idioma-entrada');
+        const labelSalida  = document.getElementById('label-idioma-salida');
+        if (labelEntrada) labelEntrada.textContent = idioma === 'en' ? 'EN' : 'ES';
+        if (labelSalida)  labelSalida.textContent  = idioma === 'en' ? 'ES' : 'EN';
 
     } finally {
         bloquearBoton(false);
@@ -159,8 +196,8 @@ document.getElementById('idioma-entrada').addEventListener('change', () => {
     const idioma = obtenerIdioma();
     document.getElementById('texto-entrada').placeholder =
         idioma === 'en'
-            ? 'Escribe una oración en inglés...'
-            : 'Escribe una oración en español...';
+            ? 'Escribe una oración en inglés para analizar y traducir...'
+            : 'Escribe una oración en español para analizar y traducir...';
 });
 
 // ─── INICIALIZAR ──────────────────────────────────────────────
