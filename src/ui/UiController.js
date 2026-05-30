@@ -4,14 +4,15 @@
 // Compilador Traductor Inglés-Español 2026
 // ============================================================
 
-import { Compilador }                        from '../Compilador.js';
+import { Compilador }                      from '../Compilador.js';
 import { cargarDiccionarios,
-    diccionariosCargados }              from '../lexico/Diccionario.js';
+    diccionariosCargados }            from '../lexico/Diccionario.js';
 import { renderizarTablaSimbolos,
-    renderizarTablaErrores }            from './RenderTablas.js';
-import { renderizarArboles }                 from './RenderArbol.js';
+    renderizarTablaErrores }          from './RenderTablas.js';
+import { renderizarArboles }               from './RenderArbol.js';
 import { renderizarErroresSemanticos,
-    renderizarSugerencias }             from './RenderSugerencias.js';
+    renderizarSugerencias }           from './RenderSugerencias.js';
+import { procesarYMostrarSugerencias }     from './RenderSugerenciasIA.js';
 
 const compilador = new Compilador();
 
@@ -95,13 +96,13 @@ document.getElementById('btn-analizar').addEventListener('click', async () => {
         const idioma    = obtenerIdioma();
         const resultado = await compilador.compilar(texto, idioma, mostrarEstadoFase);
 
-        // Tabla de símbolos
+        // ── Tabla de símbolos ─────────────────────────────
         renderizarTablaSimbolos(resultado.tablaSimbolos);
 
-        // Tabla de errores unificada
+        // ── Tabla de errores ──────────────────────────────
         renderizarTablaErrores(resultado.tablaErrores);
 
-        // Árbol — solo si no hay errores léxicos ni sintácticos
+        // ── Árbol — solo sin errores léxicos/sintácticos ──
         const hayErroresCriticos = resultado.tablaErrores.some(
             e => e.tipo === 'LÉXICO' || e.tipo === 'SINTÁCTICO'
         );
@@ -109,19 +110,40 @@ document.getElementById('btn-analizar').addEventListener('click', async () => {
             ? '<p class="placeholder-text">El árbol aparecerá aquí cuando no haya errores léxicos ni sintácticos.</p>'
             : renderizarArboles(resultado.arboles);
 
-        // Errores semánticos y sugerencias
+        // ── Errores semánticos ────────────────────────────
         renderizarErroresSemanticos(
             resultado.erroresSemanticos,
             resultado.advertencia
         );
-        renderizarSugerencias(resultado.sugerencias);
 
-        // Traducción
+        // ── Sugerencias — locales + Groq ──────────────────
+        if (resultado.tablaErrores.length > 0) {
+            mostrarEstadoFase('💡 Generando sugerencias...', 'info');
+        }
+
+        await procesarYMostrarSugerencias(
+            texto,
+            resultado.tablaErrores,
+            resultado.sugerencias,
+            idioma
+        );
+
+        // ── Badge final ───────────────────────────────────
+        if (resultado.tablaErrores.some(e => e.tipo === 'LÉXICO')) {
+            mostrarEstadoFase('❌ Errores léxicos detectados', 'invalida');
+        } else if (resultado.tablaErrores.some(e => e.tipo === 'SINTÁCTICO')) {
+            mostrarEstadoFase('❌ Errores sintácticos detectados', 'invalida');
+        } else if (resultado.tablaErrores.some(e => e.tipo === 'SEMÁNTICO')) {
+            mostrarEstadoFase('❌ Errores semánticos detectados', 'invalida');
+        }
+
+        // ── Traducción — solo sin errores ─────────────────
         document.getElementById('texto-salida').value =
             resultado.traduccion || '';
 
-        // Notificar a ControladorAudio que hay traducción disponible
-        window.dispatchEvent(new CustomEvent('traduccion-lista'));
+        if (resultado.traduccion) {
+            window.dispatchEvent(new CustomEvent('traduccion-lista'));
+        }
 
     } finally {
         bloquearBoton(false);

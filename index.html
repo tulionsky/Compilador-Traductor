@@ -43,7 +43,7 @@
             <button id="btn-limpiar">Limpiar</button>
         </div>
 
-        <!-- Controles OCR + Voz (Tulio) -->
+        <!-- Controles OCR + Voz + Archivos (Tulio) -->
         <div id="controles-extra">
             <button id="btn-microfono" title="Dictar texto">🎤 Dictar</button>
             <span id="estado-microfono"></span>
@@ -54,6 +54,13 @@
             </label>
             <input type="file" id="input-imagen"
                    accept="image/*" style="display:none">
+
+            <!-- Carga de archivos .txt (Tulio) -->
+            <button id="btn-txt" title="Cargar archivo de texto">
+                📄 Cargar .txt
+            </button>
+            <input type="file" id="input-txt"
+                   accept=".txt,text/plain" style="display:none">
 
             <div id="zona-drop">Arrastra una imagen aquí</div>
 
@@ -87,7 +94,7 @@
             <span   id="estado-voz"></span>
         </div>
 
-        <!-- Barra de carga del modelo Kokoro -->
+        <!-- Barra de carga del modelo de voz -->
         <div id="contenedor-progreso-voz" style="display:none">
             <span id="label-progreso-voz">Cargando modelo de voz...</span>
             <div id="barra-progreso-voz-fondo">
@@ -154,7 +161,7 @@
     </table>
 </section>
 
-<!-- Análisis semántico (Mijeli — pendiente) -->
+<!-- Análisis semántico -->
 <section id="seccion-semantico">
     <h2>Análisis Semántico</h2>
     <table id="tabla-errores-semanticos">
@@ -175,7 +182,7 @@
     </table>
 </section>
 
-<!-- Sugerencias (Mijeli — pendiente) -->
+<!-- Sugerencias -->
 <section id="seccion-sugerencias">
     <h2>Sugerencias de Corrección</h2>
     <div id="contenedor-sugerencias">
@@ -183,9 +190,11 @@
     </div>
 </section>
 
-<!-- Scripts — type="module" para usar import/export -->
+<!-- Scripts -->
 <script type="module" src="src/ui/UiController.js"></script>
-<script type="module" src="src/audio/ControladorAudio.js"></script>
-<script src="src/ui/ocr-voz.js"></script>
+<script type="module" src="extras/voz/ControladorAudio.js"></script>
+<script src="extras/ocr/OcrController.js"></script>
+<script src="extras/voz/VozEntrada.js"></script>
+<script src="extras/archivos/CargaArchivos.js"></script>
 </body>
 </html>

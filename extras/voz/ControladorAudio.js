@@ -19,7 +19,6 @@ import {
     onError,
 } from "./SintesisVoz.js";
 
-// ─── REFERENCIAS DOM ──────────────────────────────────────────
 const btnPlay   = document.getElementById("btn-play");
 const btnPausa  = document.getElementById("btn-pausa");
 const btnStop   = document.getElementById("btn-stop");
@@ -29,7 +28,6 @@ const contenedorProgreso = document.getElementById("contenedor-progreso-voz");
 const labelProgreso      = document.getElementById("label-progreso-voz");
 const barraFill          = document.getElementById("barra-progreso-voz-fill");
 
-// ─── HELPERS ──────────────────────────────────────────────────
 function obtenerTextoDeSalida() {
     return (document.getElementById("texto-salida")?.value || "").trim();
 }
@@ -51,7 +49,6 @@ function actualizarBotones(estado) {
             btnStop.disabled    = true;
             estadoVoz.textContent = "";
             break;
-
         case "cargando":
             btnPlay.disabled    = true;
             btnPlay.textContent = "⏳ Preparando...";
@@ -59,7 +56,6 @@ function actualizarBotones(estado) {
             btnStop.disabled    = true;
             estadoVoz.textContent = "Iniciando voz...";
             break;
-
         case "reproduciendo":
             btnPlay.disabled    = true;
             btnPlay.textContent = "▶ Reproducir";
@@ -67,7 +63,6 @@ function actualizarBotones(estado) {
             btnStop.disabled    = false;
             estadoVoz.textContent = "🔊 Reproduciendo...";
             break;
-
         case "pausado":
             btnPlay.disabled    = false;
             btnPlay.textContent = "▶ Reanudar";
@@ -93,16 +88,11 @@ function mostrarProgreso(pct, msg) {
     }
 }
 
-// ─── CALLBACKS DEL MOTOR ──────────────────────────────────────
-onEstadoCambio((estado) => {
-    actualizarBotones(estado);
-});
+onEstadoCambio((estado) => actualizarBotones(estado));
 
 onProgreso((pct, msg) => {
     mostrarProgreso(pct, msg);
-    if (pct >= 100) {
-        setTimeout(() => actualizarBotones("idle"), 1200);
-    }
+    if (pct >= 100) setTimeout(() => actualizarBotones("idle"), 1200);
 });
 
 onError((msg) => {
@@ -114,7 +104,6 @@ onError((msg) => {
     contenedorProgreso.style.display = "none";
 });
 
-// ─── EVENTOS DE BOTONES ───────────────────────────────────────
 btnPlay.addEventListener("click", async () => {
     if (estadoAudio() === "pausado") {
         reanudar();
@@ -134,21 +123,15 @@ btnPlay.addEventListener("click", async () => {
 });
 
 btnPausa.addEventListener("click", () => pausar());
-btnStop.addEventListener("click",  () => {
+btnStop.addEventListener("click", () => {
     detener();
     contenedorProgreso.style.display = "none";
 });
 
-// ─── ESCUCHAR TRADUCCIÓN LISTA ────────────────────────────────
-// UiController.js dispara este evento justo después de escribir la traducción.
-window.addEventListener("traduccion-lista", () => {
-    actualizarBotones("idle");
-});
+window.addEventListener("traduccion-lista", () => actualizarBotones("idle"));
 
-// ─── INICIALIZACIÓN ───────────────────────────────────────────
 actualizarBotones("idle");
 
-// Inicializa Web Speech API (instantáneo, sin descargas)
 inicializarKokoro().then(() => {
     actualizarBotones("idle");
     console.info("[ControladorAudio] Síntesis de voz lista.");
