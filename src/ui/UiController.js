@@ -134,9 +134,12 @@ document.getElementById('btn-analizar').addEventListener('click', async () => {
             : renderizarArboles(resultado.arboles);
 
         // ── Errores semánticos ────────────────────────────────
+        // Fix 1: si hay errores críticos, la fase semántica no se ejecutó
         renderizarErroresSemanticos(
             resultado.erroresSemanticos,
-            resultado.advertencia
+            hayErroresCriticos
+                ? 'No aplica — primero corrige los errores léxicos o sintácticos.'
+                : resultado.advertencia
         );
 
         // ── Sugerencias — locales + Groq ──────────────────────
@@ -155,7 +158,8 @@ document.getElementById('btn-analizar').addEventListener('click', async () => {
             texto,
             resultado.tablaErrores,
             resultado.sugerencias,
-            idioma
+            idioma,
+            hayErroresCriticos   // Fix 2: indicar si hay errores críticos
         );
 
         // ── Badge final ───────────────────────────────────────

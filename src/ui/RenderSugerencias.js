@@ -133,14 +133,9 @@ export function renderizarSugerencias(sugerencias) {
                         }, 350);
                     });
 
-                    // Ocultar zona si no hay errores semánticos tampoco
-                    const cuerpoSem = document.getElementById('cuerpo-errores-semanticos');
-                    const hayErroresSem = cuerpoSem &&
-                        !cuerpoSem.querySelector('.placeholder-text');
-                    if (!hayErroresSem) {
-                        const zona = document.getElementById('zona-errores-sugerencias');
-                        if (zona) zona.style.display = 'none';
-                    }
+                    // Mantener zona visible mientras el botón re-traducir esté presente
+                    const zona = document.getElementById('zona-errores-sugerencias');
+                    if (zona) zona.style.display = 'grid';
                 }
             }, 550);
         });
